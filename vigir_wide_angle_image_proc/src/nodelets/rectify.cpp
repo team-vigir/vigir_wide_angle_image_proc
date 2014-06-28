@@ -89,6 +89,7 @@ void RectifyNodelet::onInit()
   private_nh.param("queue_size", queue_size_, 5);
   std::string calibration_text_file;
   private_nh.param("calibration_text_file", calibration_text_file, std::string("N/A"));
+  NODELET_INFO("Loaded ocamlib calibration file %s", calibration_text_file.c_str());
 
   model_.reset(new ocamlib_image_geometry::OcamlibCameraModel(calibration_text_file));
 
@@ -130,11 +131,11 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
 
 
   // If zero distortion, just pass the message along
-  if (info_msg->D.empty() || info_msg->D[0] == 0.0)
-  {
-    pub_rect_.publish(image_msg);
-    return;
-  }
+  //if (info_msg->D.empty() || info_msg->D[0] == 0.0)
+  //{
+  //  pub_rect_.publish(image_msg);
+  //  return;
+  //}
 
   // Update the camera model  
   //model_.fromCameraInfo(info_msg);
@@ -149,7 +150,16 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
     boost::lock_guard<boost::recursive_mutex> lock(config_mutex_);
     interpolation = config_.interpolation;
   }
+
+  model_->updateUndistortionLUT(500,500);
   model_->rectifyImage(image, rect, interpolation);
+  //NODELET_ERROR("Bla");
+  //std::cout << "blabla";
+
+  //cv::Mat tmp_cvmat;
+  //cv::transpose( rect, tmp_cvmat );
+  //rect = tmp_cvmat;
+
 
   // Allocate new rectified image message
   sensor_msgs::ImagePtr rect_msg = cv_bridge::CvImage(image_msg->header, image_msg->encoding, rect).toImageMsg();
