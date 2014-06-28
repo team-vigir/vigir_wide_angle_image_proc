@@ -25,7 +25,7 @@ catkin_package(
 ###########
 
 ## Declare a cpp library
-add_library(${PROJECT_NAME}  src/ocamlib_camera_model.cpp src/omni_camera.cpp)
+add_library(${PROJECT_NAME}  src/ocamlib_camera_model.cpp src/ocamlib_camera_model_cv1.cpp src/omni_camera.cpp)
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${catkin_LIBRARIES}  ${Boost_LIBRARIES})
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 

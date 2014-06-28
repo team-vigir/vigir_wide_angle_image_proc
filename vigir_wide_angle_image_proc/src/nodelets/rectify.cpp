@@ -44,7 +44,7 @@
 #include <dynamic_reconfigure/server.h>
 #include <vigir_wide_angle_image_proc/RectifyConfig.h>
 
-#include <vigir_ocamlib_tools/ocamlib_camera_model.h>
+#include <vigir_ocamlib_tools/ocamlib_camera_model_cv1.h>.h>
 
 namespace wide_angle_image_proc {
 
@@ -67,7 +67,7 @@ class RectifyNodelet : public nodelet::Nodelet
 
   // Processing state (note: only safe because we're using single-threaded NodeHandle!)
   //image_geometry::PinholeCameraModel model_;
-  boost::shared_ptr<ocamlib_image_geometry::OcamlibCameraModel> model_;
+  boost::shared_ptr<ocamlib_image_geometry::OcamlibCameraModelCV1> model_;
 
   virtual void onInit();
 
@@ -91,7 +91,7 @@ void RectifyNodelet::onInit()
   private_nh.param("calibration_text_file", calibration_text_file, std::string("N/A"));
   NODELET_INFO("Loaded ocamlib calibration file %s", calibration_text_file.c_str());
 
-  model_.reset(new ocamlib_image_geometry::OcamlibCameraModel(calibration_text_file));
+  model_.reset(new ocamlib_image_geometry::OcamlibCameraModelCV1(calibration_text_file));
 
   // Set up dynamic reconfigure
   reconfigure_server_.reset(new ReconfigureServer(config_mutex_, private_nh));
@@ -151,7 +151,7 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
     interpolation = config_.interpolation;
   }
 
-  model_->updateUndistortionLUT(500,500);
+  model_->updateUndistortionLUT(image_msg->height, image_msg->width);
   model_->rectifyImage(image, rect, interpolation);
   //NODELET_ERROR("Bla");
   //std::cout << "blabla";
