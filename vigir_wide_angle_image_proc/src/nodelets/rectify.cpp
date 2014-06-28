@@ -44,6 +44,8 @@
 #include <dynamic_reconfigure/server.h>
 #include <vigir_wide_angle_image_proc/RectifyConfig.h>
 
+#include <vigir_ocamlib_tools/ocamlib_camera_model.h>
+
 namespace wide_angle_image_proc {
 
 class RectifyNodelet : public nodelet::Nodelet
@@ -64,7 +66,8 @@ class RectifyNodelet : public nodelet::Nodelet
   Config config_;
 
   // Processing state (note: only safe because we're using single-threaded NodeHandle!)
-  image_geometry::PinholeCameraModel model_;
+  //image_geometry::PinholeCameraModel model_;
+  boost::shared_ptr<ocamlib_image_geometry::OcamlibCameraModel> model_;
 
   virtual void onInit();
 
@@ -84,6 +87,10 @@ void RectifyNodelet::onInit()
 
   // Read parameters
   private_nh.param("queue_size", queue_size_, 5);
+  std::string calibration_text_file;
+  private_nh.param("calibration_text_file", calibration_text_file, std::string("N/A"));
+
+  model_.reset(new ocamlib_image_geometry::OcamlibCameraModel(calibration_text_file));
 
   // Set up dynamic reconfigure
   reconfigure_server_.reset(new ReconfigureServer(config_mutex_, private_nh));
@@ -129,8 +136,8 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
     return;
   }
 
-  // Update the camera model
-  model_.fromCameraInfo(info_msg);
+  // Update the camera model  
+  //model_.fromCameraInfo(info_msg);
   
   // Create cv::Mat views onto both buffers
   const cv::Mat image = cv_bridge::toCvShare(image_msg)->image;
@@ -142,7 +149,7 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
     boost::lock_guard<boost::recursive_mutex> lock(config_mutex_);
     interpolation = config_.interpolation;
   }
-  model_.rectifyImage(image, rect, interpolation);
+  model_->rectifyImage(image, rect, interpolation);
 
   // Allocate new rectified image message
   sensor_msgs::ImagePtr rect_msg = cv_bridge::CvImage(image_msg->header, image_msg->encoding, rect).toImageMsg();
