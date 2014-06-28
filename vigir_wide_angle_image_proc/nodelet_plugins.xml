@@ -1,0 +1,12 @@
+<library path="lib/libvigir_wide_angle_image_proc">
+
+  <class name="vigir_wide_angle_image_proc/rectify"
+	 type="wide_angle_image_proc::RectifyNodelet"
+	 base_class_type="nodelet::Nodelet">
+    <description>
+      Nodelet to rectify a wide angle image using ocamlib tools
+    </description>
+  </class>
+
+</library>
+
