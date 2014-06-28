@@ -55,27 +55,32 @@ public:
   OmniCamera(string calibFile);
   ~OmniCamera();
 
-  virtual Vector3d
+  //virtual
+  Vector3d
   cam2world(const double& x, const double& y) const;
 
-  virtual Vector3d
+  //virtual
+  Vector3d
   cam2world(const Vector2d& px) const;
 
-  virtual Vector2d
+  //virtual
+  Vector2d
   world2cam(const Vector3d& xyz_c) const;
 
-  virtual Vector2d
-  world2cam(const Vector2d& uv) const;
+  //virtual Vector2d
+  //world2cam(const Vector2d& uv) const;
 
   double
   computeErrorMultiplier();
 
-  virtual double errorMultiplier2() const
+  //virtual
+  double errorMultiplier2() const
   {
     return sqrt(error_multiplier_)/2;
   }
 
-  virtual double errorMultiplier() const
+  //virtual
+  double errorMultiplier() const
   {
     return error_multiplier_;
   }

@@ -5,17 +5,17 @@ project(vigir_ocamlib_tools)
 
 FIND_PACKAGE(Eigen REQUIRED)
 
-INCLUDE_DIRECTORIES(
+include_directories(
   include
   ${Eigen_INCLUDE_DIRS}
 )
 
 
-FIND_PACKAGE(catkin REQUIRED COMPONENTS roscpp cmake_modules)
+FIND_PACKAGE(catkin REQUIRED COMPONENTS roscpp cmake_modules cv_bridge)
 LIST(APPEND INCLUDE_DIRECTORIES ${catkin_INCLUDE_DIRS})
 catkin_package(
   DEPENDS Eigen
-  CATKIN_DEPENDS roscpp
+  CATKIN_DEPENDS roscpp cv_bridge
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
 )
@@ -24,13 +24,10 @@ catkin_package(
 ## Build ##
 ###########
 
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
-# include_directories(include)
-
 ## Declare a cpp library
-add_library(${PROJECT_NAME} src/omni_camera.cpp)
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${catkin_LIBRARIES})
+add_library(${PROJECT_NAME}  src/ocamlib_camera_model.cpp src/omni_camera.cpp)
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${catkin_LIBRARIES}  ${Boost_LIBRARIES})
+add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a cpp executable
 # add_executable(vigir_ocamlib_tools_node src/vigir_ocamlib_tools_node.cpp)
