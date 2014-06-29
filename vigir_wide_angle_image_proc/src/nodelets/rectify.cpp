@@ -44,7 +44,7 @@
 #include <dynamic_reconfigure/server.h>
 #include <vigir_wide_angle_image_proc/RectifyConfig.h>
 
-#include <vigir_ocamlib_tools/ocamlib_camera_model_cv1.h>.h>
+#include <vigir_ocamlib_tools/ocamlib_camera_model_cv1.h>
 
 namespace wide_angle_image_proc {
 
@@ -151,7 +151,7 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
     interpolation = config_.interpolation;
   }
 
-  model_->updateUndistortionLUT(image_msg->height, image_msg->width);
+  model_->updateUndistortionLUT(image_msg->height, image_msg->width, config_.focal_length);
   model_->rectifyImage(image, rect, interpolation);
   //NODELET_ERROR("Bla");
   //std::cout << "blabla";

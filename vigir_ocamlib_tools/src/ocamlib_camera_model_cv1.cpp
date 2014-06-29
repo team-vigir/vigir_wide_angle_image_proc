@@ -14,16 +14,16 @@ OcamlibCameraModelCV1::OcamlibCameraModelCV1(const std::string& ocamlib_calibrat
   mapy_persp = 0;
 }
 
-void OcamlibCameraModelCV1::updateUndistortionLUT(int height, int width)
+void OcamlibCameraModelCV1::updateUndistortionLUT(int height, int width, double fc)
 {
-  if (mapx_persp == 0){
+  if (rectify_settings_.settingsChanged(height, width, fc)){
 
-  mapx_persp_ = cv::Mat(height, width, CV_32FC1);
-  mapy_persp_ = cv::Mat(height, width, CV_32FC1);
+    mapx_persp_ = cv::Mat(height, width, CV_32FC1);
+    mapy_persp_ = cv::Mat(height, width, CV_32FC1);
 
-  float sf = 10.0f;
 
-  create_perspective_undistortion_LUT( &mapx_persp_, &mapy_persp_, &o, sf );
+    create_perspective_undistortion_LUT( &mapx_persp_, &mapy_persp_, &o, fc );
+    rectify_settings_.updateSettings(height, width, fc);
   }
 }
 

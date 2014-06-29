@@ -25,11 +25,41 @@ struct ocam_model
   int height;        // image height
 };
 
+
+
 namespace ocamlib_image_geometry{
 
 
 class OcamlibCameraModelCV1
 {
+    class RectifySettings
+    {
+    public:
+
+        RectifySettings()
+          : height(0), width(0), fc(0.0)
+        {};
+
+        bool settingsChanged(int height, int width, double fc){
+          return (height != this->height) ||
+                 (width != this->width) ||
+                 (fc != this->fc);
+        }
+
+        void updateSettings(int height, int width, double fc)
+        {
+          this->height = height;
+          this->width = width;
+          this->fc = fc;
+        }
+
+    private:
+        int height;
+        int width;
+        double fc;
+    };
+
+
 public:
 
   OcamlibCameraModelCV1(const std::string& ocamlib_calibration_data_file);
@@ -37,7 +67,7 @@ public:
   void rectifyImage(const cv::Mat& raw, cv::Mat& rectified,
                     int interpolation = CV_INTER_LINEAR) const;
 
-  void updateUndistortionLUT(int width, int height);
+  void updateUndistortionLUT(int width, int height, double fc);
   void create_perspective_undistortion_LUT( cv::Mat *mapx, cv::Mat *mapy, float sf) const;
 
   void world2cam(double point2D[2], double point3D[3], struct ocam_model *myocam_model);
@@ -56,6 +86,8 @@ protected:
   cv::Mat mapy_persp_;
 
   ocam_model o;
+
+  RectifySettings rectify_settings_;
 
 };
 
