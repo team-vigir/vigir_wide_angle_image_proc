@@ -41,7 +41,9 @@ public:
   void create_perspective_undistortion_LUT( cv::Mat *mapx, cv::Mat *mapy, float sf) const;
 
   void world2cam(double point2D[2], double point3D[3], struct ocam_model *myocam_model);
-  void create_perspective_undistortion_LUT( CvMat *mapx, CvMat *mapy, struct ocam_model *ocam_model, float sf);
+
+  void create_perspective_undistortion_LUT( cv::Mat *mapx, cv::Mat *mapy, struct ocam_model *ocam_model, float sf);
+
 protected:
   //boost::shared_ptr<vk::OmniCamera> omni_camera_;
 
@@ -49,6 +51,9 @@ protected:
 
   CvMat* mapx_persp;
   CvMat* mapy_persp;
+
+  cv::Mat mapx_persp_;
+  cv::Mat mapy_persp_;
 
   ocam_model o;
 

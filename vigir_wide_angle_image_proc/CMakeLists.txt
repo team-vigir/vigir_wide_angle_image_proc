@@ -15,7 +15,7 @@ generate_dynamic_reconfigure_options(cfg/Rectify.cfg)
 catkin_package(
   CATKIN_DEPENDS image_geometry roscpp sensor_msgs vigir_ocamlib_tools
   DEPENDS OpenCV
-  INCLUDE_DIRS include
+  INCLUDE_DIRS
   LIBRARIES ${PROJECT_NAME}
 )
 
@@ -27,7 +27,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(SYSTEM ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
-include_directories(include)
+#include_directories(include)
 
 # Nodelet library
 add_library(${PROJECT_NAME} src/nodelets/rectify.cpp)

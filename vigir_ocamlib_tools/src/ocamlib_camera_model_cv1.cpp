@@ -17,26 +17,20 @@ OcamlibCameraModelCV1::OcamlibCameraModelCV1(const std::string& ocamlib_calibrat
 void OcamlibCameraModelCV1::updateUndistortionLUT(int height, int width)
 {
   if (mapx_persp == 0){
-  mapx_persp = cvCreateMat(height, width, CV_32FC1);
-  mapy_persp = cvCreateMat(height, width, CV_32FC1);
 
-  float sf = 4.0f;
-  create_perspective_undistortion_LUT( mapx_persp, mapy_persp, &o, sf );
+  mapx_persp_ = cv::Mat(height, width, CV_32FC1);
+  mapy_persp_ = cv::Mat(height, width, CV_32FC1);
+
+  float sf = 10.0f;
+
+  create_perspective_undistortion_LUT( &mapx_persp_, &mapy_persp_, &o, sf );
   }
 }
 
 void OcamlibCameraModelCV1::rectifyImage(const cv::Mat& raw, cv::Mat& rectified,
                   int interpolation ) const
 {
-  /*
-  CvMat src1 = raw;
-  CvMat dst_persp;
-  cvRemap( &src1, &dst_persp, mapx_persp, mapy_persp, CV_INTER_LINEAR+CV_WARP_FILL_OUTLIERS, cvScalarAll(0) );
-  //rectified = cv::Mat(&dst_persp, true);
-  */
-  cv::Mat mapx_perspc (mapx_persp);
-  cv::Mat mapy_perspc (mapy_persp);
-  cv::remap( raw, rectified, mapx_perspc, mapy_perspc, interpolation, cv::BORDER_CONSTANT, cv::Scalar(0,0, 0) );
+  cv::remap( raw, rectified, mapx_persp_, mapy_persp_, interpolation, cv::BORDER_CONSTANT, cv::Scalar(0,0, 0) );
 
 }
 
@@ -85,14 +79,12 @@ void OcamlibCameraModelCV1::world2cam(double point2D[2], double point3D[3], stru
     point2D[1] = yc;
   }
 }
-//------------------------------------------------------------------------------
-void OcamlibCameraModelCV1::create_perspective_undistortion_LUT( CvMat *mapx, CvMat *mapy, struct ocam_model *ocam_model, float sf)
+
+void OcamlibCameraModelCV1::create_perspective_undistortion_LUT( cv::Mat *mapx, cv::Mat *mapy, struct ocam_model *ocam_model, float sf)
 {
      int i, j;
      int width = mapx->cols; //New width
      int height = mapx->rows;//New height
-     float *data_mapx = mapx->data.fl;
-     float *data_mapy = mapy->data.fl;
      float Nxc = height/2.0;
      float Nyc = width/2.0;
      float Nz  = -width/sf;
@@ -106,8 +98,9 @@ void OcamlibCameraModelCV1::create_perspective_undistortion_LUT( CvMat *mapx, Cv
              M[1] = (j - Nyc);
              M[2] = Nz;
              world2cam(m, M, ocam_model);
-             *( data_mapx + i*width+j ) = (float) m[1];
-             *( data_mapy + i*width+j ) = (float) m[0];
+
+             mapx->at<float>(i,j) = (float) m[1];
+             mapy->at<float>(i,j) = (float) m[0];
          }
 }
 

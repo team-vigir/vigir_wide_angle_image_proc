@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+
+<!--
+This launch file creates a nodelet manager and adds the drivers for both SA cameras to it.
+-->
+
+<launch>
+  
+  <node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager"/>
+
+  <node pkg="nodelet" type="nodelet" name="left_sa_rectify"
+        args="load vigir_wide_angle_image_proc/rectify standalone_nodelet" output="screen">
+    <remap from="image_mono" to="/sa/left/image_raw" />
+    <remap from="camera_info" to="/sa/left/camera_info" /> 
+    <param name="calibration_text_file" value="$(find vigir_wide_angle_image_proc)/calib/calib_results_l_sa.txt" />
+  </node>
+
+ <!--
+  <node pkg="nodelet" type="nodelet" name="left_sa_rectify"
+        args="load pgr_camera/camera_nodelet sa_camera_nodelet_manager" output="screen">
+    <param name="serial" value="12491354" />
+    <param name="frame_id" type="str" value="r_situational_awareness_camera_optical_frame" />
+    <remap from="/right_sa_camera_driver/image" to="/sa/right/image_raw" />
+    <remap from="camera_info" to="/sa/right/camera_info" />
+  </node>
+
+ -->
+
+</launch>
+
