@@ -68,8 +68,11 @@ public:
                     int interpolation = CV_INTER_LINEAR) const;
 
   void updateUndistortionLUT(int width, int height, double fc);
+  void updateUndistortionLUT(cv::Mat *mapx, cv::Mat *mapy);
   void create_perspective_undistortion_LUT( cv::Mat *mapx, cv::Mat *mapy, float sf) const;
 
+
+  void cam2world(double point3D[3], double point2D[2], struct ocam_model *myocam_model);
   void world2cam(double point2D[2], double point3D[3], struct ocam_model *myocam_model);
 
   void create_perspective_undistortion_LUT( cv::Mat *mapx, cv::Mat *mapy, struct ocam_model *ocam_model, float sf);

@@ -151,7 +151,8 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
     interpolation = config_.interpolation;
   }
 
-  model_->updateUndistortionLUT(image_msg->height, image_msg->width, config_.focal_length);
+  //model_->updateUndistortionLUT(image_msg->height, image_msg->width, config_.focal_length);
+  model_->updateUndistortionLUT(800, 800, 10.0);
   model_->rectifyImage(image, rect, interpolation);
   //NODELET_ERROR("Bla");
   //std::cout << "blabla";

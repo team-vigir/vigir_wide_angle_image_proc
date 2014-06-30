@@ -30,7 +30,9 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${catkin_LIBRARIES}  ${Boost_LIBRARIES})
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a cpp executable
-# add_executable(vigir_ocamlib_tools_node src/vigir_ocamlib_tools_node.cpp)
+add_executable(vigir_wide_angle_tools_node src/test.cpp)
+target_link_libraries(vigir_wide_angle_tools_node ${catkin_LIBRARIES})
+
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
