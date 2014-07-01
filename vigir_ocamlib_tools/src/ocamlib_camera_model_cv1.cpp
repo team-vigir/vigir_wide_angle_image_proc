@@ -91,6 +91,8 @@ void OcamlibCameraModelCV1::world2cam(double point2D[2], double point3D[3], stru
  double rho, x, y;
  double invnorm;
  int i;
+ //std::cout << "bla2\n";
+ //std::cout << "\n" << point3D[0] << "   " << point3D[1] << "   " << point3D[2] << "\n";
 
   if (norm != 0)
   {
@@ -105,17 +107,31 @@ void OcamlibCameraModelCV1::world2cam(double point2D[2], double point3D[3], stru
       rho += t_i*invpol[i];
     }
 
-    x = point3D[1]*invnorm*rho;
-    y = point3D[0]*invnorm*rho;
+    x = point3D[0]*invnorm*rho;
+    y = point3D[1]*invnorm*rho;
 
-    point2D[1] = x*c + y*d + xc;
-    point2D[0] = x*e + y   + yc;
+    point2D[0] = x*c + y*d + xc;
+    point2D[1] = x*e + y   + yc;
+
+    //std::cout << "\n first " << point2D[0] << "   " << point2D[1] << "\n";
   }
   else
   {
-    point2D[1] = xc;
-    point2D[0] = yc;
+    point2D[0] = xc;
+    point2D[1] = yc;
+    //std::cout << "\n second " << point2D[0] << "   " << point2D[1] << "\n";
   }
+}
+
+void OcamlibCameraModelCV1::cam2world(double point3D[3], double point2D[2])
+{
+  cam2world(point3D, point2D, &o);
+}
+
+void OcamlibCameraModelCV1::world2cam(double* point2D, double* point3D)
+{
+  std::cout << "bla\n";
+  world2cam(point2D, point3D, &o);
 }
 
 void OcamlibCameraModelCV1::create_perspective_undistortion_LUT( cv::Mat *mapx, cv::Mat *mapy, struct ocam_model *ocam_model, float sf)
@@ -156,11 +172,20 @@ void OcamlibCameraModelCV1::updateUndistortionLUT(cv::Mat *mapx, cv::Mat *mapy)
 
   Eigen::Vector3f direction(1.0, 0.0, 0.0);
 
-  rotation_eigen =  //Eigen::AngleAxisf(-0.5*M_PI, Eigen::Vector3f::UnitX()) *
-                    //Eigen::AngleAxisf(-0.5*M_PI, Eigen::Vector3f::UnitZ()) *
+  rotation_eigen =  //Eigen::AngleAxisf(M_PI, Eigen::Vector3f::UnitX()) *
+                    //Eigen::AngleAxisf(M_PI, Eigen::Vector3f::UnitY()) *
       ocamlib_image_geometry::getRotationFromDirection(direction, Eigen::Vector3f::UnitZ());
                     //* Eigen::AngleAxisf(-0.5*M_PI, Eigen::Vector3f::UnitY())
-                    //* Eigen::AngleAxisf(-0.5*M_PI, Eigen::Vector3f::UnitZ());
+                    //* Eigen::AngleAxisf(-0.5*M_PI, Eigen::Vector3f::UnitX());
+
+
+  std::cout << rotation_eigen << "\n";
+
+  Eigen::Matrix3f to_cam;
+  //to_cam << 1, 0, 0, 0, 1, 0, 0, 0, 1;
+
+  //to_cam << 0, -1, 0, 0, 0, -1, 1, 0, 0;
+  to_cam << 0, -1, 0, 0, 0, -1, 1, 0, 0;
 
   //Eigen::Vector2f focal(400.0f, 400.0f);
   //Eigen::Vector2f optical_center(static_cast<float>(width)/2.0f, static_cast<float>(height)/2.0f);
@@ -180,11 +205,20 @@ void OcamlibCameraModelCV1::updateUndistortionLUT(cv::Mat *mapx, cv::Mat *mapy)
           world_vec_pre_rotate[1] = (j - Nyc);
           world_vec_pre_rotate[2] = Nz;
 
-          Eigen::Vector3f world_vec_rotated (rotation_eigen * world_vec_pre_rotate);
+          Eigen::Vector3f world_vec_rotated (to_cam.transpose() * rotation_eigen * world_vec_pre_rotate);
+
+
 
           M[0] = world_vec_rotated[0];
           M[1] = world_vec_rotated[1];
           M[2] = world_vec_rotated[2];
+
+
+          /*
+          M[0] =  world_vec_rotated[1];
+          M[1] = -world_vec_rotated[2];
+          M[2] =  world_vec_rotated[0];
+          */
 
           this->world2cam(m, M, &o);
 

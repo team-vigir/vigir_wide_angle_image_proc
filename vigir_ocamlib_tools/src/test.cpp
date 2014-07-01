@@ -27,5 +27,34 @@ int main(int argc, char **argv)
   rot = ocamlib_image_geometry::getRotationFromDirection(direction3, Eigen::Vector3f::UnitZ());
 
   std::cout << "\n" << rot << "\n";
+
+
+  ocamlib_image_geometry::OcamlibCameraModelCV1 model("/home/kohlbrecher/flor_repo/catkin_ws/src/vigir_wide_angle_image_proc/vigir_wide_angle_image_proc/calib/calib_results_l_sa.txt");
+
+  //model.updateUndistortionLUT(800, 800, 4.0);
+
+  Eigen::Vector3d point_world(100.0, 100.0, 0.0);
+  Eigen::Vector2d point_cam;
+    std::cout << "\n" <<  point_world << "\n";
+
+    double test[2];
+    test[0] = 0;
+    test[1] = 0;
+    double point_in_world[3];
+    point_in_world[0] = 1.0;
+    point_in_world[1] = 0.0;
+    point_in_world[2] = 1.0;
+
+    double point_in_cam[3];
+    point_in_cam[0] = point_in_world[2];
+    point_in_cam[1] = point_in_world[1];
+    point_in_cam[2] = point_in_world[0];
+
+  //model.world2cam(point_world.data(), point_cam.data());
+    model.world2cam(test, point_in_cam, model.getModel());
+
+  //std::cout << "\n" <<  point_cam << "\n";
+
+    std::cout << "\n" << test[0] << " " << test[1] << "\n";
   return 0;
 }

@@ -31,7 +31,7 @@ add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a cpp executable
 add_executable(vigir_wide_angle_tools_node src/test.cpp)
-target_link_libraries(vigir_wide_angle_tools_node ${catkin_LIBRARIES})
+target_link_libraries(vigir_wide_angle_tools_node ${catkin_LIBRARIES} ${PROJECT_NAME} )
 
 
 ## Add cmake target dependencies of the executable/library
