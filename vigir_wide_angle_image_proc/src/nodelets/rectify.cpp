@@ -56,7 +56,8 @@ class RectifyNodelet : public nodelet::Nodelet
   int queue_size_;
   
   boost::mutex connect_mutex_;
-  image_transport::Publisher pub_rect_;
+  //image_transport::Publisher pub_rect_;
+  image_transport::CameraPublisher pub_rect_camera_;
 
   // Dynamic reconfigure
   boost::recursive_mutex config_mutex_;
@@ -83,6 +84,8 @@ void RectifyNodelet::onInit()
 {
   ros::NodeHandle &nh         = getNodeHandle();
   ros::NodeHandle &private_nh = getPrivateNodeHandle();
+
+  //ros::NodeHandle rect_nh (getPrivateNodeHandle().getNamespace()); //+ "/rect_camera");
   it_.reset(new image_transport::ImageTransport(nh));
 
   // Read parameters
@@ -102,17 +105,19 @@ void RectifyNodelet::onInit()
   image_transport::SubscriberStatusCallback connect_cb = boost::bind(&RectifyNodelet::connectCb, this);
   // Make sure we don't enter connectCb() between advertising and assigning to pub_rect_
   boost::lock_guard<boost::mutex> lock(connect_mutex_);
-  pub_rect_  = it_->advertise("image_rect",  1, connect_cb, connect_cb);
+  //pub_rect_  = it_->advertise("image_rect",  1, connect_cb, connect_cb);
+  pub_rect_camera_ = it_->advertiseCamera("image_rect_ns", 1, connect_cb, connect_cb);
 }
 
 // Handles (un)subscribing when clients (un)subscribe
 void RectifyNodelet::connectCb()
 {
   boost::lock_guard<boost::mutex> lock(connect_mutex_);
-  if (pub_rect_.getNumSubscribers() == 0)
+  if (pub_rect_camera_.getNumSubscribers() == 0){
+    NODELET_INFO("Disconnecting.");
     sub_camera_.shutdown();
-  else if (!sub_camera_)
-  {
+  }else if (!sub_camera_){
+    NODELET_INFO("Connecting.");
     image_transport::TransportHints hints("raw", ros::TransportHints(), getPrivateNodeHandle());
     sub_camera_ = it_->subscribeCamera("image_mono", queue_size_, &RectifyNodelet::imageCb, this, hints);
   }
@@ -124,7 +129,7 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
   // Verify camera is actually calibrated
   if (!info_msg->K[0] == 0.0) {
     NODELET_ERROR_THROTTLE(30, "Rectified topic '%s' requested but camera publishing '%s' "
-                           "has non-zero CameraInfo.", pub_rect_.getTopic().c_str(),
+                           "has non-zero CameraInfo.", pub_rect_camera_.getTopic().c_str(),
                            sub_camera_.getInfoTopic().c_str());
     return;
   }
@@ -163,7 +168,8 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
 
   // Allocate new rectified image message
   sensor_msgs::ImagePtr rect_msg = cv_bridge::CvImage(image_msg->header, image_msg->encoding, rect).toImageMsg();
-  pub_rect_.publish(rect_msg);
+  //pub_rect_.publish(rect_msg);
+  pub_rect_camera_.publish(rect_msg, info_msg);
 }
 
 void RectifyNodelet::configCb(Config &config, uint32_t level)
