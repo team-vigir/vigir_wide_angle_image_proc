@@ -12,6 +12,8 @@ OcamlibCameraModelCV1::OcamlibCameraModelCV1(const std::string& ocamlib_calibrat
 
   mapx_persp = 0;
   mapy_persp = 0;
+
+  cam_info_.reset(new sensor_msgs::CameraInfo());
 }
 
 void OcamlibCameraModelCV1::updateUndistortionLUT(int height, int width, double fc)
@@ -24,6 +26,14 @@ void OcamlibCameraModelCV1::updateUndistortionLUT(int height, int width, double 
 
     create_perspective_undistortion_LUT( &mapx_persp_, &mapy_persp_, &o, fc );
     rectify_settings_.updateSettings(height, width, fc);
+
+    cam_info_->height = height;
+    cam_info_->width  = width;
+    cam_info_->P[0]  = o.xc;
+    cam_info_->P[2]  = fc;
+    cam_info_->P[5]  = o.yc;
+    cam_info_->P[6]  = fc;
+    cam_info_->P[10] = 1.0;
   }
 }
 

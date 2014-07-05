@@ -168,8 +168,15 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
 
   // Allocate new rectified image message
   sensor_msgs::ImagePtr rect_msg = cv_bridge::CvImage(image_msg->header, image_msg->encoding, rect).toImageMsg();
+  sensor_msgs::CameraInfoPtr rect_info (new sensor_msgs::CameraInfo());
+
   //pub_rect_.publish(rect_msg);
-  pub_rect_camera_.publish(rect_msg, info_msg);
+  //pub_rect_camera_.publish(rect_msg, info_msg);
+
+  model_->setCameraInfo(*rect_info);
+  rect_info->header = info_msg->header;
+
+  pub_rect_camera_.publish(rect_msg, rect_info);
 }
 
 void RectifyNodelet::configCb(Config &config, uint32_t level)
