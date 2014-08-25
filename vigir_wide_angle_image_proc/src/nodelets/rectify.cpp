@@ -53,7 +53,9 @@ class RectifyNodelet : public nodelet::Nodelet
   // ROS communication
   boost::shared_ptr<image_transport::ImageTransport> it_;
   image_transport::CameraSubscriber sub_camera_;
+
   int queue_size_;
+  std::string rectified_frame_id_;
   
   boost::mutex connect_mutex_;
   //image_transport::Publisher pub_rect_;
@@ -93,6 +95,15 @@ void RectifyNodelet::onInit()
   std::string calibration_text_file;
   private_nh.param("calibration_text_file", calibration_text_file, std::string("N/A"));
   NODELET_INFO("Loaded ocamlib calibration file %s", calibration_text_file.c_str());
+
+  private_nh.param("rectified_frame_id", rectified_frame_id_, std::string(""));
+
+  if(rectified_frame_id_ == ""){
+    NODELET_INFO("No rectified frame_id specified, using subscribed image frame_id");
+  }else{
+    NODELET_INFO("Using frame_id: %s for rectified images", rectified_frame_id_.c_str());
+  }
+
 
   model_.reset(new ocamlib_image_geometry::OcamlibCameraModelCV1(calibration_text_file));
 
@@ -134,6 +145,10 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
     return;
   }
 
+  if (rectified_frame_id_ == ""){
+    rectified_frame_id_ = image_msg->header.frame_id;
+  }
+
 
   // If zero distortion, just pass the message along
   //if (info_msg->D.empty() || info_msg->D[0] == 0.0)
@@ -153,11 +168,11 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
   int interpolation;
   {
     boost::lock_guard<boost::recursive_mutex> lock(config_mutex_);
-    interpolation = config_.interpolation;
+    //interpolation = config_.interpolation;
   }
 
   model_->updateUndistortionLUT(image_msg->height, image_msg->width, config_.focal_length);
-  model_->rectifyImage(image, rect, interpolation);
+  model_->rectifyImage(image, rect, config_.interpolation);
   //NODELET_ERROR("Bla");
   //std::cout << "blabla";
 
@@ -175,6 +190,9 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
 
   model_->setCameraInfo(*rect_info);
   rect_info->header = info_msg->header;
+
+  rect_info->header.frame_id = rectified_frame_id_;
+  rect_msg->header.frame_id = rectified_frame_id_;
 
   pub_rect_camera_.publish(rect_msg, rect_info);
 }
