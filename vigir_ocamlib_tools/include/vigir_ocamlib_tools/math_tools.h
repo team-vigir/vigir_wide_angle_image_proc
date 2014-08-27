@@ -9,17 +9,17 @@ namespace ocamlib_image_geometry{
   {
     Eigen::Matrix3f ret;
 
-    Eigen::Vector3f yaxis (up.cross(direction));
+    Eigen::Vector3f direction_normalized(direction.normalized());
+
+    Eigen::Vector3f yaxis (up.cross(direction_normalized));
     yaxis.normalize();
 
     Eigen::Vector3f zaxis (direction.cross(yaxis));
     zaxis.normalize();
 
-    ret.col(0) = direction;
+    ret.col(0) = direction_normalized;
     ret.col(1) = yaxis;
     ret.col(2) = zaxis;
-
-    ret.col(0).normalize();
 
     return ret;
   }

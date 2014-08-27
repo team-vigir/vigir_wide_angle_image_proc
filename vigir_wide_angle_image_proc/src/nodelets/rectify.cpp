@@ -53,10 +53,13 @@ class RectifyNodelet : public nodelet::Nodelet
   // ROS communication
   boost::shared_ptr<image_transport::ImageTransport> it_;
   image_transport::CameraSubscriber sub_camera_;
+
   int queue_size_;
+  std::string rectified_frame_id_;
   
   boost::mutex connect_mutex_;
-  image_transport::Publisher pub_rect_;
+  //image_transport::Publisher pub_rect_;
+  image_transport::CameraPublisher pub_rect_camera_;
 
   // Dynamic reconfigure
   boost::recursive_mutex config_mutex_;
@@ -83,6 +86,8 @@ void RectifyNodelet::onInit()
 {
   ros::NodeHandle &nh         = getNodeHandle();
   ros::NodeHandle &private_nh = getPrivateNodeHandle();
+
+  //ros::NodeHandle rect_nh (getPrivateNodeHandle().getNamespace()); //+ "/rect_camera");
   it_.reset(new image_transport::ImageTransport(nh));
 
   // Read parameters
@@ -90,6 +95,15 @@ void RectifyNodelet::onInit()
   std::string calibration_text_file;
   private_nh.param("calibration_text_file", calibration_text_file, std::string("N/A"));
   NODELET_INFO("Loaded ocamlib calibration file %s", calibration_text_file.c_str());
+
+  private_nh.param("rectified_frame_id", rectified_frame_id_, std::string(""));
+
+  if(rectified_frame_id_ == ""){
+    NODELET_INFO("No rectified frame_id specified, using subscribed image frame_id");
+  }else{
+    NODELET_INFO("Using frame_id: %s for rectified images", rectified_frame_id_.c_str());
+  }
+
 
   model_.reset(new ocamlib_image_geometry::OcamlibCameraModelCV1(calibration_text_file));
 
@@ -102,17 +116,19 @@ void RectifyNodelet::onInit()
   image_transport::SubscriberStatusCallback connect_cb = boost::bind(&RectifyNodelet::connectCb, this);
   // Make sure we don't enter connectCb() between advertising and assigning to pub_rect_
   boost::lock_guard<boost::mutex> lock(connect_mutex_);
-  pub_rect_  = it_->advertise("image_rect",  1, connect_cb, connect_cb);
+  //pub_rect_  = it_->advertise("image_rect",  1, connect_cb, connect_cb);
+  pub_rect_camera_ = it_->advertiseCamera("image_rect_ns", 1, connect_cb, connect_cb);
 }
 
 // Handles (un)subscribing when clients (un)subscribe
 void RectifyNodelet::connectCb()
 {
   boost::lock_guard<boost::mutex> lock(connect_mutex_);
-  if (pub_rect_.getNumSubscribers() == 0)
+  if (pub_rect_camera_.getNumSubscribers() == 0){
+    NODELET_INFO("Disconnecting.");
     sub_camera_.shutdown();
-  else if (!sub_camera_)
-  {
+  }else if (!sub_camera_){
+    NODELET_INFO("Connecting.");
     image_transport::TransportHints hints("raw", ros::TransportHints(), getPrivateNodeHandle());
     sub_camera_ = it_->subscribeCamera("image_mono", queue_size_, &RectifyNodelet::imageCb, this, hints);
   }
@@ -124,9 +140,13 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
   // Verify camera is actually calibrated
   if (!info_msg->K[0] == 0.0) {
     NODELET_ERROR_THROTTLE(30, "Rectified topic '%s' requested but camera publishing '%s' "
-                           "has non-zero CameraInfo.", pub_rect_.getTopic().c_str(),
+                           "has non-zero CameraInfo.", pub_rect_camera_.getTopic().c_str(),
                            sub_camera_.getInfoTopic().c_str());
     return;
+  }
+
+  if (rectified_frame_id_ == ""){
+    rectified_frame_id_ = image_msg->header.frame_id;
   }
 
 
@@ -148,12 +168,17 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
   int interpolation;
   {
     boost::lock_guard<boost::recursive_mutex> lock(config_mutex_);
-    interpolation = config_.interpolation;
+    //interpolation = config_.interpolation;
   }
 
+//<<<<<<< HEAD
   //model_->updateUndistortionLUT(image_msg->height, image_msg->width, config_.focal_length);
-  model_->updateUndistortionLUT(800, 800, 10.0);
-  model_->rectifyImage(image, rect, interpolation);
+//  model_->updateUndistortionLUT(800, 800, 10.0);
+//  model_->rectifyImage(image, rect, interpolation);
+//=======
+  model_->updateUndistortionLUT(image_msg->height, image_msg->width, config_.focal_length);
+  model_->rectifyImage(image, rect, config_.interpolation);
+//>>>>>>> master
   //NODELET_ERROR("Bla");
   //std::cout << "blabla";
 
@@ -164,7 +189,18 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
 
   // Allocate new rectified image message
   sensor_msgs::ImagePtr rect_msg = cv_bridge::CvImage(image_msg->header, image_msg->encoding, rect).toImageMsg();
-  pub_rect_.publish(rect_msg);
+  sensor_msgs::CameraInfoPtr rect_info (new sensor_msgs::CameraInfo());
+
+  //pub_rect_.publish(rect_msg);
+  //pub_rect_camera_.publish(rect_msg, info_msg);
+
+  model_->setCameraInfo(*rect_info);
+  rect_info->header = info_msg->header;
+
+  rect_info->header.frame_id = rectified_frame_id_;
+  rect_msg->header.frame_id = rectified_frame_id_;
+
+  pub_rect_camera_.publish(rect_msg, rect_info);
 }
 
 void RectifyNodelet::configCb(Config &config, uint32_t level)

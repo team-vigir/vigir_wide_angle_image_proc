@@ -11,9 +11,13 @@ This launch file creates a nodelet manager and adds the drivers for both SA came
   <node pkg="nodelet" type="nodelet" name="left_sa_rectify"
         args="load vigir_wide_angle_image_proc/rectify standalone_nodelet" output="screen">
     <remap from="image_mono" to="/sa/left/image_raw" />
-    <remap from="camera_info" to="/sa/left/camera_info" /> 
+    <!--<remap from="camera_info" to="/sa/left/camera_info" />-->
+    <remap from="image_rect_ns" to="/sa/left_calibrated/image_rect" />
     <param name="calibration_text_file" value="$(find vigir_wide_angle_image_proc)/calib/calib_results_l_sa.txt" />
+    <param name="rectified_frame_id" value="/l_sa_camera_optical_frame_calibrated" />
   </node>
+
+  <node pkg="tf" type="static_transform_publisher" name="rotate_left_sa_optical_frame" args="0 0 0 1.57 0 0 l_situational_awareness_camera_optical_frame l_sa_camera_optical_frame_calibrated 100"/>
 
  <!--
   <node pkg="nodelet" type="nodelet" name="left_sa_rectify"

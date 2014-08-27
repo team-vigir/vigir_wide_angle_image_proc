@@ -7,6 +7,8 @@
 //#include <stdexcept>
 #include <boost/shared_ptr.hpp>
 
+#include <sensor_msgs/CameraInfo.h>
+
 #include "omni_camera.h"
 #include <opencv2/opencv.hpp>
 
@@ -68,7 +70,7 @@ public:
                     int interpolation = CV_INTER_LINEAR) const;
 
   void updateUndistortionLUT(int width, int height, double fc);
-  void updateUndistortionLUT(cv::Mat *mapx, cv::Mat *mapy);
+  void updateUndistortionLUT(cv::Mat *mapx, cv::Mat *mapy, float sf);
   void create_perspective_undistortion_LUT( cv::Mat *mapx, cv::Mat *mapy, float sf) const;
 
 
@@ -80,7 +82,11 @@ public:
 
   void create_perspective_undistortion_LUT( cv::Mat *mapx, cv::Mat *mapy, struct ocam_model *ocam_model, float sf);
 
+//<<<<<<< HEAD
   ocam_model * getModel() {return &o; };
+//=======
+  void setCameraInfo(sensor_msgs::CameraInfo& cam_info) const { cam_info = *this->cam_info_; };
+//>>>>>>> master
 
 protected:
   //boost::shared_ptr<vk::OmniCamera> omni_camera_;
@@ -96,6 +102,8 @@ protected:
   ocam_model o;
 
   RectifySettings rectify_settings_;
+
+  sensor_msgs::CameraInfoPtr cam_info_;
 
 };
 

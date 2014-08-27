@@ -196,7 +196,7 @@ void OcamlibCameraModelCV1::updateUndistortionLUT(cv::Mat *mapx, cv::Mat *mapy, 
   std::cout << "\nrotation Eigen\n" << rotation_eigen << "\n";
 
   Eigen::Matrix3f to_cam;
-  to_cam << 1, 0, 0, 0, 1, 0, 0, 0, 1;
+  //to_cam << 1, 0, 0, 0, 1, 0, 0, 0, 1;
 
   //to_cam << 0, -1, 0, 0, 0, -1, 1, 0, 0;
   to_cam << 0, 1, 0, 0, 0, -1, -1, 0, 0;
