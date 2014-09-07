@@ -184,7 +184,9 @@ void OcamlibCameraModelCV1::updateUndistortionLUT(cv::Mat *mapx, cv::Mat *mapy, 
   //directly use the buffer allocated by OpenCV
   Eigen::Map<Eigen::Matrix3f> rotation_eigen( rotation_cv.ptr<float>() );
 
-  Eigen::Vector3f direction(1.0, -1.0, 0.0);
+  //Eigen::Vector3f direction(1.0, 1.0, 0.0);
+  Eigen::Vector3f direction(1.0, -1.0, -1.0);
+
 
   rotation_eigen =  //Eigen::AngleAxisf(M_PI, Eigen::Vector3f::UnitX()) *
                     //Eigen::AngleAxisf(M_PI, Eigen::Vector3f::UnitY()) *
@@ -193,13 +195,16 @@ void OcamlibCameraModelCV1::updateUndistortionLUT(cv::Mat *mapx, cv::Mat *mapy, 
                     //* Eigen::AngleAxisf(-0.5*M_PI, Eigen::Vector3f::UnitX());
 
 
-  std::cout << "\nrotation Eigen\n" << rotation_eigen << "\n";
+  //std::cout << "\nrotation Eigen\n" << rotation_eigen << "\n";
 
   Eigen::Matrix3f to_cam;
-  to_cam << 1, 0, 0, 0, 1, 0, 0, 0, 1;
+  //to_cam << 1, 0, 0, 0, 1, 0, 0, 0, 1;
 
   //to_cam << 0, -1, 0, 0, 0, -1, 1, 0, 0;
-  to_cam << 0, 1, 0, 0, 0, -1, -1, 0, 0;
+  //to_cam << 0, 1, 0, 0, 0, -1, -1, 0, 0;
+  to_cam << 0, 0, 1,    0, 1 ,0,    1,  0, 0;
+
+  //std::cout << "\nvector_cam\n" << to_cam * direction << "\n";
 
   //Eigen::Vector2f focal(400.0f, 400.0f);
   //Eigen::Vector2f optical_center(static_cast<float>(width)/2.0f, static_cast<float>(height)/2.0f);
@@ -211,27 +216,24 @@ void OcamlibCameraModelCV1::updateUndistortionLUT(cv::Mat *mapx, cv::Mat *mapy, 
   double M[3];
   double m[2];
 
+  Eigen::Matrix3f transform_matrix (to_cam.transpose() * rotation_eigen  * to_cam);
+  //Eigen::Matrix3f transform_matrix (to_cam * rotation_eigen );
+
+  //std::cout << "\nTransform Matrix\n" << transform_matrix << "\n";
+
   Eigen::Vector3f world_vec_pre_rotate;
-  for (int i=0; i<height/1.3; i++){
-      for (int j=0; j<width/1.3; j++)
+  for (int i=0; i<height; i++){
+      for (int j=0; j<width; j++)
       {
         world_vec_pre_rotate[0] = (i - Nxc);
           world_vec_pre_rotate[1] = (j - Nyc);
           world_vec_pre_rotate[2] = Nz;
 
-          Eigen::Vector3f world_vec_rotated (to_cam.transpose() * rotation_eigen  * to_cam * world_vec_pre_rotate);
+          Eigen::Vector3f world_vec_rotated (transform_matrix * world_vec_pre_rotate);
 
           M[0] = world_vec_rotated[0];
           M[1] = world_vec_rotated[1];
           M[2] = world_vec_rotated[2];
-
-
-          /*
-          M[0] = world_vec_rotated[1];
-          M[1] = -world_vec_rotated[2];
-          M[2] = -world_vec_rotated[0];
-          */
-
 
           this->world2cam(m, M, &o);
 
