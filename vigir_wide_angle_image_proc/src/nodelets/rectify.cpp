@@ -46,6 +46,8 @@
 
 #include <vigir_ocamlib_tools/ocamlib_camera_model_cv1.h>
 
+#include <tf/transform_broadcaster.h>
+
 namespace wide_angle_image_proc {
 
 class RectifyNodelet : public nodelet::Nodelet
@@ -71,6 +73,10 @@ class RectifyNodelet : public nodelet::Nodelet
   // Processing state (note: only safe because we're using single-threaded NodeHandle!)
   //image_geometry::PinholeCameraModel model_;
   boost::shared_ptr<ocamlib_image_geometry::OcamlibCameraModelCV1> model_;
+
+
+  //Optional
+  boost::shared_ptr<tf::TransformBroadcaster> tfb_;
 
   virtual void onInit();
 
@@ -102,6 +108,13 @@ void RectifyNodelet::onInit()
     NODELET_INFO("No rectified frame_id specified, using subscribed image frame_id");
   }else{
     NODELET_INFO("Using frame_id: %s for rectified images", rectified_frame_id_.c_str());
+  }
+
+  bool use_tfb = false;
+  private_nh.param("use tf broadcaster", use_tfb, false);
+
+  if (use_tfb){
+    tfb_.reset(new tf::TransformBroadcaster());
   }
 
 
@@ -178,21 +191,15 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
 //=======
   model_->updateUndistortionLUT(image_msg->height, image_msg->width, config_.focal_length);
   model_->rectifyImage(image, rect, config_.interpolation);
-//>>>>>>> master
-  //NODELET_ERROR("Bla");
-  //std::cout << "blabla";
 
-  //cv::Mat tmp_cvmat;
-  //cv::transpose( rect, tmp_cvmat );
-  //rect = tmp_cvmat;
+  if (tfb_){
+    //tfb_->sendTransform();
 
+  }
 
   // Allocate new rectified image message
   sensor_msgs::ImagePtr rect_msg = cv_bridge::CvImage(image_msg->header, image_msg->encoding, rect).toImageMsg();
   sensor_msgs::CameraInfoPtr rect_info (new sensor_msgs::CameraInfo());
-
-  //pub_rect_.publish(rect_msg);
-  //pub_rect_camera_.publish(rect_msg, info_msg);
 
   model_->setCameraInfo(*rect_info);
   rect_info->header = info_msg->header;

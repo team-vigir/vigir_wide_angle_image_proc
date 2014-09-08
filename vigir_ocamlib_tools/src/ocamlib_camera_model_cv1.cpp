@@ -18,7 +18,11 @@ OcamlibCameraModelCV1::OcamlibCameraModelCV1(const std::string& ocamlib_calibrat
   cam_info_.reset(new sensor_msgs::CameraInfo());
 }
 
-void OcamlibCameraModelCV1::updateUndistortionLUT(int height, int width, double fc)
+void OcamlibCameraModelCV1::updateUndistortionLUT(int height,
+                                                  int width,
+                                                  double fc,
+                                                  const Eigen::Vector3d& direction,
+                                                  const Eigen::Vector3d& up)
 {
   if (rectify_settings_.settingsChanged(height, width, fc)){
 
@@ -172,12 +176,14 @@ void OcamlibCameraModelCV1::create_perspective_undistortion_LUT( cv::Mat *mapx, 
          }
 }
 
-void OcamlibCameraModelCV1::updateUndistortionLUT(cv::Mat *mapx, cv::Mat *mapy, float sf)
+void OcamlibCameraModelCV1::updateUndistortionLUT(cv::Mat *mapx,
+                                                  cv::Mat *mapy,
+                                                  float sf,
+                                                  const Eigen::Vector3d& direction,
+                                                  const Eigen::Vector3d& up)
 {
   int width = mapx->cols; //New width
   int height = mapx->rows;//New height
-
-  Eigen::Vector3d optical_axis_vec_;
 
   cv::Mat rotation_cv(3,3,CV_32FC1);
 
@@ -185,15 +191,10 @@ void OcamlibCameraModelCV1::updateUndistortionLUT(cv::Mat *mapx, cv::Mat *mapy, 
   Eigen::Map<Eigen::Matrix3f> rotation_eigen( rotation_cv.ptr<float>() );
 
   //Eigen::Vector3f direction(1.0, 1.0, 0.0);
-  Eigen::Vector3f direction(1.0, -1.0, -1.0);
+  //Eigen::Vector3f direction(1.0, -1.0, -1.0);
 
 
-  rotation_eigen =  //Eigen::AngleAxisf(M_PI, Eigen::Vector3f::UnitX()) *
-                    //Eigen::AngleAxisf(M_PI, Eigen::Vector3f::UnitY()) *
-      ocamlib_image_geometry::getRotationFromDirection(direction, Eigen::Vector3f::UnitZ());
-                    //* Eigen::AngleAxisf(-0.5*M_PI, Eigen::Vector3f::UnitY())
-                    //* Eigen::AngleAxisf(-0.5*M_PI, Eigen::Vector3f::UnitX());
-
+  rotation_eigen =  ocamlib_image_geometry::getRotationFromDirection(direction, up);
 
   //std::cout << "\nrotation Eigen\n" << rotation_eigen << "\n";
 

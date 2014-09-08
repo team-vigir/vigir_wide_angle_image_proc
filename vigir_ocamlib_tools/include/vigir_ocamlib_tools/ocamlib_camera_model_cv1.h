@@ -69,8 +69,21 @@ public:
   void rectifyImage(const cv::Mat& raw, cv::Mat& rectified,
                     int interpolation = CV_INTER_LINEAR) const;
 
-  void updateUndistortionLUT(int width, int height, double fc);
-  void updateUndistortionLUT(cv::Mat *mapx, cv::Mat *mapy, float sf);
+  void updateUndistortionLUT(int width,
+                             int height,
+                             double fc,
+                             const Eigen::Vector3d& direction = Eigen::Vector3d(1.0, 0.0, 0.0),
+                             const Eigen::Vector3d& up = Eigen::Vector3d::UnitZ());
+
+  void updateUndistortionLUT(cv::Mat *mapx,
+                             cv::Mat *mapy,
+                             float sf,
+                             const Eigen::Vector3d& direction = Eigen::Vector3d(1.0, 0.0, 0.0),
+                             const Eigen::Vector3d& up = Eigen::Vector3d::UnitZ());
+
+
+
+
   void create_perspective_undistortion_LUT( cv::Mat *mapx, cv::Mat *mapy, float sf) const;
 
 
