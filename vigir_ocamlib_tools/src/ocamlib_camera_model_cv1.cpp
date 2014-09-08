@@ -194,55 +194,22 @@ void OcamlibCameraModelCV1::updateUndistortionLUT(cv::Mat *mapx,
   double Nyc = width/2.0;
   double Nz  = -width/sf;
 
-  //double M[3];
   double m[2];
 
   Eigen::Matrix3d transform_matrix (to_cam_.transpose() * rotation_eigen_  * to_cam_);
-  //Eigen::Matrix3f transform_matrix (to_cam * rotation_eigen );
 
-  //std::cout << "\nTransform Matrix\n" << transform_matrix << "\n";
-
-  Eigen::Vector3d world_vec_pre_rotate;
   for (int i=0; i<height; i++){
-      for (int j=0; j<width; j++)
-      {
-          /*
-          world_vec_pre_rotate[0] = (i - Nxc);
-          world_vec_pre_rotate[1] = (j - Nyc);
-          world_vec_pre_rotate[2] = Nz;
-          */
+    for (int j=0; j<width; j++)
+    {
+      Eigen::Vector3d world_vec_rotated (transform_matrix * Eigen::Vector3d(i - Nxc,
+                                                                            j - Nyc,
+                                                                            Nz));
+      this->world2cam(m, world_vec_rotated.data(), &o);
 
-
-        Eigen::Vector3d world_vec_rotated (transform_matrix * Eigen::Vector3d(i - Nxc,
-                                                                              j - Nyc,
-                                                                              Nz));
-
-          /*
-          M[0] = world_vec_rotated[0];
-          M[1] = world_vec_rotated[1];
-          M[2] = world_vec_rotated[2];
-          */
-
-          this->world2cam(m, world_vec_rotated.data(), &o);
-
-          mapx->at<float>(i,j) = (float) m[1];
-          mapy->at<float>(i,j) = (float) m[0];
-      }
+      mapx->at<float>(i,j) = (float) m[1];
+      mapy->at<float>(i,j) = (float) m[0];
+    }
   }
-
-
-
-
-  //rotation_eigen = (Eigen::AngleAxisf(0.25*M_PI, Eigen::Vector3f::UnitX()) *
-  //                  Eigen::AngleAxisf(0.25*M_PI, Eigen::Vector3f::UnitY())).matrix();
-
-  //std::vector<std::pair<
-
-
-  //cv::projectPoints()
-
-
-
 }
 
 int OcamlibCameraModelCV1::get_ocam_model(struct ocam_model *myocam_model, const char *filename)

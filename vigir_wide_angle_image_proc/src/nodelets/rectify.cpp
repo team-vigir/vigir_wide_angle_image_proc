@@ -176,7 +176,11 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
     //interpolation = config_.interpolation;
   }
 
-  Eigen::Vector3d virtual_cam_direction (1.0, -1.0, -1.0);
+  Eigen::Vector3d virtual_cam_direction(Eigen::AngleAxisd((config_.yaw_deg * M_PI)/180.0, Eigen::Vector3d::UnitZ()) *
+                                        Eigen::AngleAxisd((config_.pitch_deg * M_PI)/180.0, Eigen::Vector3d::UnitY()) *
+                                        Eigen::Vector3d(1.0, 0.0, 0.0));
+
+
   Eigen::Vector3d virtual_cam_up_vector (Eigen::Vector3d::UnitZ());
 
   // This only performs actual processing when settings changed
@@ -196,6 +200,7 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
 
   pub_rect_camera_.publish(rect_msg, rect_info);
 
+  // Publish cam frames to tf if requested
   if (tfb_){
 
     // Transform from parent to (non optical) camera frame
