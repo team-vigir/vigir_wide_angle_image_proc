@@ -47,6 +47,7 @@
 #include <vigir_ocamlib_tools/ocamlib_camera_model_cv1.h>
 
 #include <tf/transform_broadcaster.h>
+#include <tf_conversions/tf_eigen.h>
 
 namespace wide_angle_image_proc {
 
@@ -58,6 +59,7 @@ class RectifyNodelet : public nodelet::Nodelet
 
   int queue_size_;
   std::string rectified_frame_id_;
+  std::string parent_frame_id_;
   
   boost::mutex connect_mutex_;
   //image_transport::Publisher pub_rect_;
@@ -103,6 +105,7 @@ void RectifyNodelet::onInit()
   NODELET_INFO("Loaded ocamlib calibration file %s", calibration_text_file.c_str());
 
   private_nh.param("rectified_frame_id", rectified_frame_id_, std::string(""));
+  private_nh.param("parent_frame_id", parent_frame_id_, std::string(""));
 
   if(rectified_frame_id_ == ""){
     NODELET_INFO("No rectified frame_id specified, using subscribed image frame_id");
@@ -161,17 +164,6 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
   if (rectified_frame_id_ == ""){
     rectified_frame_id_ = image_msg->header.frame_id;
   }
-
-
-  // If zero distortion, just pass the message along
-  //if (info_msg->D.empty() || info_msg->D[0] == 0.0)
-  //{
-  //  pub_rect_.publish(image_msg);
-  //  return;
-  //}
-
-  // Update the camera model  
-  //model_.fromCameraInfo(info_msg);
   
   // Create cv::Mat views onto both buffers
   const cv::Mat image = cv_bridge::toCvShare(image_msg)->image;
@@ -184,17 +176,41 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
     //interpolation = config_.interpolation;
   }
 
-//<<<<<<< HEAD
-  //model_->updateUndistortionLUT(image_msg->height, image_msg->width, config_.focal_length);
-//  model_->updateUndistortionLUT(800, 800, 10.0);
-//  model_->rectifyImage(image, rect, interpolation);
-//=======
-  model_->updateUndistortionLUT(image_msg->height, image_msg->width, config_.focal_length, Eigen::Vector3d(1.0, -1.0, -1.0));
+  Eigen::Vector3d virtual_cam_direction (1.0, -1.0, -1.0);
+  Eigen::Vector3d virtual_cam_up_vector (Eigen::Vector3d::UnitZ());
+
+  model_->updateUndistortionLUT(image_msg->height, image_msg->width, config_.focal_length, virtual_cam_direction, virtual_cam_up_vector);
   model_->rectifyImage(image, rect, config_.interpolation);
 
   if (tfb_){
-    //tfb_->sendTransform();
 
+    const Eigen::Matrix3d& rotation_eigen = model_->getRotationMatrix();
+    //tf::Matrix3x3 rotation_tf;
+
+    //tf::matrixEigenToTF(rotation_eigen, rotation_tf);
+
+    Eigen::Quaterniond quat(rotation_eigen);
+    tf::Quaternion tf_quat;
+    tf::quaternionEigenToTF(quat, tf_quat);
+
+
+    tf::StampedTransform trans;
+    trans.child_frame_id_ = rectified_frame_id_;
+    trans.frame_id_ = parent_frame_id_;
+
+    trans.setIdentity();
+    trans.setRotation(tf_quat);
+
+    // Publishing two different tf transforms with the image timestamp inbetween to make sure that
+    // we don´t get interpolation artifacts
+    std::vector<tf::StampedTransform> tf_vec;
+    trans.stamp_ = image_msg->header.stamp - ros::Duration(0.001);
+    tf_vec.push_back(trans);
+
+    trans.stamp_ = image_msg->header.stamp + ros::Duration(0.001);
+    tf_vec.push_back(trans);
+
+    tfb_->sendTransform(tf_vec);
   }
 
   // Allocate new rectified image message
@@ -204,8 +220,13 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
   model_->setCameraInfo(*rect_info);
   rect_info->header = info_msg->header;
 
-  rect_info->header.frame_id = rectified_frame_id_;
-  rect_msg->header.frame_id = rectified_frame_id_;
+  //rect_info->header.frame_id = rectified_frame_id_;
+  //rect_msg->header.frame_id = rectified_frame_id_;
+
+  rect_info->header.frame_id = "/l_situational_awareness_virtual_camera_optical_frame";
+  rect_msg->header.frame_id = "/l_situational_awareness_virtual_camera_optical_frame";
+
+
 
   pub_rect_camera_.publish(rect_msg, rect_info);
 }

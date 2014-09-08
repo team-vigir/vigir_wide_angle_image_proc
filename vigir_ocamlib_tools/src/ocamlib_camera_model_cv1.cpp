@@ -7,7 +7,10 @@
 namespace ocamlib_image_geometry{
 
 OcamlibCameraModelCV1::OcamlibCameraModelCV1(const std::string& ocamlib_calibration_data_file)
+  : rotation_eigen_(Eigen::Matrix3d::Identity())
 {
+  to_cam_ << 0, 0, 1,    0, 1 ,0,    1,  0, 0;
+
   //omni_camera_.reset(new vk::OmniCamera(ocamlib_calibration_data_file));
 
   get_ocam_model(&o, ocamlib_calibration_data_file.c_str());
@@ -185,30 +188,7 @@ void OcamlibCameraModelCV1::updateUndistortionLUT(cv::Mat *mapx,
   int width = mapx->cols; //New width
   int height = mapx->rows;//New height
 
-  cv::Mat rotation_cv(3,3,CV_32FC1);
-
-  //directly use the buffer allocated by OpenCV
-  //Eigen::Map<Eigen::Matrix3f> rotation_eigen( rotation_cv.ptr<float>() );
-
-  //Eigen::Vector3f direction(1.0, 1.0, 0.0);
-  //Eigen::Vector3f direction(1.0, -1.0, -1.0);
-
-
-  Eigen::Matrix3d rotation_eigen (ocamlib_image_geometry::getRotationFromDirection(direction, up));
-
-  //std::cout << "\nrotation Eigen\n" << rotation_eigen << "\n";
-
-  Eigen::Matrix3d to_cam;
-  //to_cam << 1, 0, 0, 0, 1, 0, 0, 0, 1;
-
-  //to_cam << 0, -1, 0, 0, 0, -1, 1, 0, 0;
-  //to_cam << 0, 1, 0, 0, 0, -1, -1, 0, 0;
-  to_cam << 0, 0, 1,    0, 1 ,0,    1,  0, 0;
-
-  //std::cout << "\nvector_cam\n" << to_cam * direction << "\n";
-
-  //Eigen::Vector2f focal(400.0f, 400.0f);
-  //Eigen::Vector2f optical_center(static_cast<float>(width)/2.0f, static_cast<float>(height)/2.0f);
+  rotation_eigen_ = (ocamlib_image_geometry::getRotationFromDirection(direction, up));
 
   double Nxc = height/2.0;
   double Nyc = width/2.0;
@@ -217,7 +197,7 @@ void OcamlibCameraModelCV1::updateUndistortionLUT(cv::Mat *mapx,
   //double M[3];
   double m[2];
 
-  Eigen::Matrix3d transform_matrix (to_cam.transpose() * rotation_eigen  * to_cam);
+  Eigen::Matrix3d transform_matrix (to_cam_.transpose() * rotation_eigen_  * to_cam_);
   //Eigen::Matrix3f transform_matrix (to_cam * rotation_eigen );
 
   //std::cout << "\nTransform Matrix\n" << transform_matrix << "\n";

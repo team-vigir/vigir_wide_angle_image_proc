@@ -81,7 +81,11 @@ public:
                              const Eigen::Vector3d& direction = Eigen::Vector3d(1.0, 0.0, 0.0),
                              const Eigen::Vector3d& up = Eigen::Vector3d::UnitZ());
 
+  const Eigen::Matrix3d& getRotationMatrix() const { return rotation_eigen_; }
 
+  void setCameraInfo(sensor_msgs::CameraInfo& cam_info) const { cam_info = *this->cam_info_; };
+
+private:
 
 
   void create_perspective_undistortion_LUT( cv::Mat *mapx, cv::Mat *mapy, float sf) const;
@@ -98,7 +102,7 @@ public:
 //<<<<<<< HEAD
   ocam_model * getModel() {return &o; };
 //=======
-  void setCameraInfo(sensor_msgs::CameraInfo& cam_info) const { cam_info = *this->cam_info_; };
+
 //>>>>>>> master
 
 protected:
@@ -117,6 +121,12 @@ protected:
   RectifySettings rectify_settings_;
 
   sensor_msgs::CameraInfoPtr cam_info_;
+
+  // Holds the current virtual camera orientation (can be changed)
+  Eigen::Matrix3d rotation_eigen_;
+
+  // Mapping to camera coords (stays fixed)
+  Eigen::Matrix3d to_cam_;
 
 };
 
