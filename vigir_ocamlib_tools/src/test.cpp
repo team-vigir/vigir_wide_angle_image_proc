@@ -4,6 +4,7 @@
 
 int main(int argc, char **argv)
 {
+  /*
   //ros::init(argc, argv, "test_wide_angle");
 
   //ros::NodeHandle nh("~");
@@ -58,5 +59,6 @@ int main(int argc, char **argv)
   //std::cout << "\n" <<  point_cam << "\n";
 
     std::cout << "\ntest:\n" << test[0] << " " << test[1] << "\n";
+    */
   return 0;
 }

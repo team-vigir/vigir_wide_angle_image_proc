@@ -188,17 +188,17 @@ void OcamlibCameraModelCV1::updateUndistortionLUT(cv::Mat *mapx,
   cv::Mat rotation_cv(3,3,CV_32FC1);
 
   //directly use the buffer allocated by OpenCV
-  Eigen::Map<Eigen::Matrix3f> rotation_eigen( rotation_cv.ptr<float>() );
+  //Eigen::Map<Eigen::Matrix3f> rotation_eigen( rotation_cv.ptr<float>() );
 
   //Eigen::Vector3f direction(1.0, 1.0, 0.0);
   //Eigen::Vector3f direction(1.0, -1.0, -1.0);
 
 
-  rotation_eigen =  ocamlib_image_geometry::getRotationFromDirection(direction, up);
+  Eigen::Matrix3d rotation_eigen (ocamlib_image_geometry::getRotationFromDirection(direction, up));
 
   //std::cout << "\nrotation Eigen\n" << rotation_eigen << "\n";
 
-  Eigen::Matrix3f to_cam;
+  Eigen::Matrix3d to_cam;
   //to_cam << 1, 0, 0, 0, 1, 0, 0, 0, 1;
 
   //to_cam << 0, -1, 0, 0, 0, -1, 1, 0, 0;
@@ -217,12 +217,12 @@ void OcamlibCameraModelCV1::updateUndistortionLUT(cv::Mat *mapx,
   double M[3];
   double m[2];
 
-  Eigen::Matrix3f transform_matrix (to_cam.transpose() * rotation_eigen  * to_cam);
+  Eigen::Matrix3d transform_matrix (to_cam.transpose() * rotation_eigen  * to_cam);
   //Eigen::Matrix3f transform_matrix (to_cam * rotation_eigen );
 
   //std::cout << "\nTransform Matrix\n" << transform_matrix << "\n";
 
-  Eigen::Vector3f world_vec_pre_rotate;
+  Eigen::Vector3d world_vec_pre_rotate;
   for (int i=0; i<height; i++){
       for (int j=0; j<width; j++)
       {
@@ -230,7 +230,7 @@ void OcamlibCameraModelCV1::updateUndistortionLUT(cv::Mat *mapx,
           world_vec_pre_rotate[1] = (j - Nyc);
           world_vec_pre_rotate[2] = Nz;
 
-          Eigen::Vector3f world_vec_rotated (transform_matrix * world_vec_pre_rotate);
+          Eigen::Vector3d world_vec_rotated (transform_matrix * world_vec_pre_rotate);
 
           M[0] = world_vec_rotated[0];
           M[1] = world_vec_rotated[1];

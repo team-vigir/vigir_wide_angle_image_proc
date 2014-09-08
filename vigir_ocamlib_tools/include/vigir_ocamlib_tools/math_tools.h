@@ -5,16 +5,17 @@
 
 namespace ocamlib_image_geometry{
  
-  Eigen::Matrix3f getRotationFromDirection(const Eigen::Vector3f& direction, const Eigen::Vector3f& up)
+  template<typename ConcreteScalar>
+  Eigen::Matrix<ConcreteScalar, 3, 3> getRotationFromDirection(const Eigen::Matrix<ConcreteScalar, 3, 1>& direction, const Eigen::Matrix<ConcreteScalar, 3, 1>& up)
   {
-    Eigen::Matrix3f ret;
+    Eigen::Matrix<ConcreteScalar, 3, 3> ret;
 
-    Eigen::Vector3f direction_normalized(direction.normalized());
+    Eigen::Matrix<ConcreteScalar, 3, 1> direction_normalized(direction.normalized());
 
-    Eigen::Vector3f yaxis (up.cross(direction_normalized));
+    Eigen::Matrix<ConcreteScalar, 3, 1> yaxis (up.cross(direction_normalized));
     yaxis.normalize();
 
-    Eigen::Vector3f zaxis (direction.cross(yaxis));
+    Eigen::Matrix<ConcreteScalar, 3, 1> zaxis (direction.cross(yaxis));
     zaxis.normalize();
 
     ret.col(0) = direction_normalized;
