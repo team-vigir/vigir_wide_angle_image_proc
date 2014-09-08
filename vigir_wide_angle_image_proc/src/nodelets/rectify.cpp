@@ -110,13 +110,13 @@ void RectifyNodelet::onInit()
     NODELET_INFO("Using frame_id: %s for rectified images", rectified_frame_id_.c_str());
   }
 
+
   bool use_tfb = false;
-  private_nh.param("use tf broadcaster", use_tfb, false);
+  private_nh.param("use_tf_broadcaster", use_tfb, false);
 
   if (use_tfb){
     tfb_.reset(new tf::TransformBroadcaster());
   }
-
 
   model_.reset(new ocamlib_image_geometry::OcamlibCameraModelCV1(calibration_text_file));
 
@@ -189,7 +189,7 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
 //  model_->updateUndistortionLUT(800, 800, 10.0);
 //  model_->rectifyImage(image, rect, interpolation);
 //=======
-  model_->updateUndistortionLUT(image_msg->height, image_msg->width, config_.focal_length);
+  model_->updateUndistortionLUT(image_msg->height, image_msg->width, config_.focal_length, Eigen::Vector3d(1.0, -1.0, -1.0));
   model_->rectifyImage(image, rect, config_.interpolation);
 
   if (tfb_){

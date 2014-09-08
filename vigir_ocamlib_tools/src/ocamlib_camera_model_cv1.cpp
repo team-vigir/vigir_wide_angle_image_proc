@@ -31,7 +31,7 @@ void OcamlibCameraModelCV1::updateUndistortionLUT(int height,
 
 
     //create_perspective_undistortion_LUT( &mapx_persp_, &mapy_persp_, &o, fc );
-    this->updateUndistortionLUT(&mapx_persp_, &mapy_persp_, fc);
+    this->updateUndistortionLUT(&mapx_persp_, &mapy_persp_, fc, direction, up);
     rectify_settings_.updateSettings(height, width, fc);
 
     // @TODO: Find out if optical center estimate or ideal optical center should be used here
@@ -210,11 +210,11 @@ void OcamlibCameraModelCV1::updateUndistortionLUT(cv::Mat *mapx,
   //Eigen::Vector2f focal(400.0f, 400.0f);
   //Eigen::Vector2f optical_center(static_cast<float>(width)/2.0f, static_cast<float>(height)/2.0f);
 
-  float Nxc = height/2.0;
-  float Nyc = width/2.0;
-  float Nz  = -width/sf;
+  double Nxc = height/2.0;
+  double Nyc = width/2.0;
+  double Nz  = -width/sf;
 
-  double M[3];
+  //double M[3];
   double m[2];
 
   Eigen::Matrix3d transform_matrix (to_cam.transpose() * rotation_eigen  * to_cam);
@@ -226,17 +226,24 @@ void OcamlibCameraModelCV1::updateUndistortionLUT(cv::Mat *mapx,
   for (int i=0; i<height; i++){
       for (int j=0; j<width; j++)
       {
-        world_vec_pre_rotate[0] = (i - Nxc);
+          /*
+          world_vec_pre_rotate[0] = (i - Nxc);
           world_vec_pre_rotate[1] = (j - Nyc);
           world_vec_pre_rotate[2] = Nz;
+          */
 
-          Eigen::Vector3d world_vec_rotated (transform_matrix * world_vec_pre_rotate);
 
+        Eigen::Vector3d world_vec_rotated (transform_matrix * Eigen::Vector3d(i - Nxc,
+                                                                              j - Nyc,
+                                                                              Nz));
+
+          /*
           M[0] = world_vec_rotated[0];
           M[1] = world_vec_rotated[1];
           M[2] = world_vec_rotated[2];
+          */
 
-          this->world2cam(m, M, &o);
+          this->world2cam(m, world_vec_rotated.data(), &o);
 
           mapx->at<float>(i,j) = (float) m[1];
           mapy->at<float>(i,j) = (float) m[0];
