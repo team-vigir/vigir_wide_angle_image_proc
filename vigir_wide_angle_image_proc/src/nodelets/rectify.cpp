@@ -179,20 +179,31 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
   Eigen::Vector3d virtual_cam_direction (1.0, -1.0, -1.0);
   Eigen::Vector3d virtual_cam_up_vector (Eigen::Vector3d::UnitZ());
 
+  // This only performs actual processing when settings changed
   model_->updateUndistortionLUT(image_msg->height, image_msg->width, config_.focal_length, virtual_cam_direction, virtual_cam_up_vector);
+
   model_->rectifyImage(image, rect, config_.interpolation);
+
+  // Allocate new rectified image message
+  sensor_msgs::ImagePtr rect_msg = cv_bridge::CvImage(image_msg->header, image_msg->encoding, rect).toImageMsg();
+  sensor_msgs::CameraInfoPtr rect_info (new sensor_msgs::CameraInfo());
+
+  model_->setCameraInfo(*rect_info);
+  rect_info->header = info_msg->header;
+
+  rect_info->header.frame_id = rectified_frame_id_ + "_optical_frame";
+  rect_msg->header.frame_id = rectified_frame_id_ + "_optical_frame";
+
+  pub_rect_camera_.publish(rect_msg, rect_info);
 
   if (tfb_){
 
+    // Transform from parent to (non optical) camera frame
     const Eigen::Matrix3d& rotation_eigen = model_->getRotationMatrix();
-    //tf::Matrix3x3 rotation_tf;
-
-    //tf::matrixEigenToTF(rotation_eigen, rotation_tf);
 
     Eigen::Quaterniond quat(rotation_eigen);
     tf::Quaternion tf_quat;
     tf::quaternionEigenToTF(quat, tf_quat);
-
 
     tf::StampedTransform trans;
     trans.child_frame_id_ = rectified_frame_id_;
@@ -210,25 +221,25 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
     trans.stamp_ = image_msg->header.stamp + ros::Duration(0.001);
     tf_vec.push_back(trans);
 
+
+
+    // Transform from camera to optical frame
+    tf::Quaternion to_optical;
+    to_optical.setRPY(-M_PI * 0.5, 0.0, -M_PI * 0.5);
+
+    trans.frame_id_ = rectified_frame_id_;
+    trans.child_frame_id_ = rectified_frame_id_ + "_optical_frame";
+    trans.setRotation(to_optical);
+
+    trans.stamp_ = image_msg->header.stamp - ros::Duration(0.001);
+    tf_vec.push_back(trans);
+
+    trans.stamp_ = image_msg->header.stamp + ros::Duration(0.001);
+    tf_vec.push_back(trans);
+
     tfb_->sendTransform(tf_vec);
   }
 
-  // Allocate new rectified image message
-  sensor_msgs::ImagePtr rect_msg = cv_bridge::CvImage(image_msg->header, image_msg->encoding, rect).toImageMsg();
-  sensor_msgs::CameraInfoPtr rect_info (new sensor_msgs::CameraInfo());
-
-  model_->setCameraInfo(*rect_info);
-  rect_info->header = info_msg->header;
-
-  //rect_info->header.frame_id = rectified_frame_id_;
-  //rect_msg->header.frame_id = rectified_frame_id_;
-
-  rect_info->header.frame_id = "/l_situational_awareness_virtual_camera_optical_frame";
-  rect_msg->header.frame_id = "/l_situational_awareness_virtual_camera_optical_frame";
-
-
-
-  pub_rect_camera_.publish(rect_msg, rect_info);
 }
 
 void RectifyNodelet::configCb(Config &config, uint32_t level)

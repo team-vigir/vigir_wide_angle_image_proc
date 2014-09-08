@@ -42,23 +42,30 @@ class OcamlibCameraModelCV1
           : height(0), width(0), fc(0.0)
         {};
 
-        bool settingsChanged(int height, int width, double fc){
+        bool settingsChanged(int height, int width, double fc, const Eigen::Vector3d& virtual_cam_direction, const Eigen::Vector3d& virtual_cam_up){
           return (height != this->height) ||
                  (width != this->width) ||
-                 (fc != this->fc);
+                 (fc != this->fc) ||
+                 (virtual_cam_direction != virtual_cam_direction_) ||
+                 (virtual_cam_up != virtual_cam_up_);
         }
 
-        void updateSettings(int height, int width, double fc)
+        void updateSettings(int height, int width, double fc, const Eigen::Vector3d& virtual_cam_direction, const Eigen::Vector3d& virtual_cam_up)
         {
           this->height = height;
           this->width = width;
           this->fc = fc;
+          virtual_cam_direction_ = virtual_cam_direction;
+          virtual_cam_up_ = virtual_cam_up;
         }
 
     private:
         int height;
         int width;
         double fc;
+
+        Eigen::Vector3d virtual_cam_direction_;
+        Eigen::Vector3d virtual_cam_up_;
     };
 
 

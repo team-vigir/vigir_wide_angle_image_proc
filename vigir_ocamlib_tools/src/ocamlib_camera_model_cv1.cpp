@@ -27,7 +27,7 @@ void OcamlibCameraModelCV1::updateUndistortionLUT(int height,
                                                   const Eigen::Vector3d& direction,
                                                   const Eigen::Vector3d& up)
 {
-  if (rectify_settings_.settingsChanged(height, width, fc)){
+  if (rectify_settings_.settingsChanged(height, width, fc, direction, up)){
 
     mapx_persp_ = cv::Mat(height, width, CV_32FC1);
     mapy_persp_ = cv::Mat(height, width, CV_32FC1);
@@ -35,7 +35,7 @@ void OcamlibCameraModelCV1::updateUndistortionLUT(int height,
 
     //create_perspective_undistortion_LUT( &mapx_persp_, &mapy_persp_, &o, fc );
     this->updateUndistortionLUT(&mapx_persp_, &mapy_persp_, fc, direction, up);
-    rectify_settings_.updateSettings(height, width, fc);
+    rectify_settings_.updateSettings(height, width, fc, direction, up);
 
     // @TODO: Find out if optical center estimate or ideal optical center should be used here
 
