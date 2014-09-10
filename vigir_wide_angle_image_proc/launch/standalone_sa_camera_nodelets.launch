@@ -18,6 +18,7 @@ This launch file creates a nodelet manager and adds the drivers for both SA came
     <param name="rectified_frame_id" value="/l_sa_virtual_camera" />
 
     <param name="use_tf_broadcaster" value="true" />
+    <param name="use_tf_listener" value="true" />
     <param name="parent_frame_id" value="/l_situational_awareness_camera_link_upright" />
 
   </node>

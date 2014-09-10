@@ -47,6 +47,7 @@
 #include <vigir_ocamlib_tools/ocamlib_camera_model_cv1.h>
 
 #include <tf/transform_broadcaster.h>
+#include <tf/transform_listener.h>
 #include <tf_conversions/tf_eigen.h>
 
 namespace wide_angle_image_proc {
@@ -79,6 +80,7 @@ class RectifyNodelet : public nodelet::Nodelet
 
   //Optional
   boost::shared_ptr<tf::TransformBroadcaster> tfb_;
+  boost::shared_ptr<tf::TransformListener> tfl_;
 
   virtual void onInit();
 
@@ -117,8 +119,15 @@ void RectifyNodelet::onInit()
   bool use_tfb = false;
   private_nh.param("use_tf_broadcaster", use_tfb, false);
 
+  bool use_tfl = false;
+  private_nh.param("use_tf_listener", use_tfl, false);
+
   if (use_tfb){
     tfb_.reset(new tf::TransformBroadcaster());
+  }
+
+  if (use_tfl){
+    tfl_.reset(new tf::TransformListener());
   }
 
   model_.reset(new ocamlib_image_geometry::OcamlibCameraModelCV1(calibration_text_file));
@@ -176,9 +185,25 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
     //interpolation = config_.interpolation;
   }
 
-  Eigen::Vector3d virtual_cam_direction(Eigen::AngleAxisd((config_.yaw_deg * M_PI)/180.0, Eigen::Vector3d::UnitZ()) *
-                                        Eigen::AngleAxisd((config_.pitch_deg * M_PI)/180.0, Eigen::Vector3d::UnitY()) *
-                                        Eigen::Vector3d(1.0, 0.0, 0.0));
+  Eigen::Vector3d virtual_cam_direction (Eigen::Vector3d::UnitX());
+
+  if (config_.use_reconfigure_viewpoint){
+    virtual_cam_direction = (Eigen::AngleAxisd((config_.yaw_deg * M_PI)/180.0, Eigen::Vector3d::UnitZ()) *
+                             Eigen::AngleAxisd((config_.pitch_deg * M_PI)/180.0, Eigen::Vector3d::UnitY()) *
+                             Eigen::Vector3d::UnitX());
+  }else if (tfl_){
+    try{
+      tf::StampedTransform transform;
+      tfl_->lookupTransform( this->parent_frame_id_, std::string("/l_hand"), ros::Time(0),  transform);
+      tf::vectorTFToEigen(transform.getOrigin(), virtual_cam_direction);
+    }catch(tf::TransformException e){
+      NODELET_ERROR("Transfom error");
+    }
+
+
+
+  }
+
 
 
   Eigen::Vector3d virtual_cam_up_vector (Eigen::Vector3d::UnitZ());
