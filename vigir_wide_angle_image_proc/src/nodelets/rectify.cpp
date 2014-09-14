@@ -50,6 +50,8 @@
 #include <tf/transform_listener.h>
 #include <tf_conversions/tf_eigen.h>
 
+#include <sensor_msgs/JointState.h>
+
 namespace wide_angle_image_proc {
 
 class RectifyNodelet : public nodelet::Nodelet
@@ -59,8 +61,12 @@ class RectifyNodelet : public nodelet::Nodelet
   image_transport::CameraSubscriber sub_camera_;
 
   int queue_size_;
+
   std::string rectified_frame_id_;
   std::string parent_frame_id_;
+
+  std::string yaw_joint_name_;
+  std::string pitch_joint_name_;
   
   boost::mutex connect_mutex_;
   //image_transport::Publisher pub_rect_;
@@ -81,6 +87,7 @@ class RectifyNodelet : public nodelet::Nodelet
   //Optional
   boost::shared_ptr<tf::TransformBroadcaster> tfb_;
   boost::shared_ptr<tf::TransformListener> tfl_;
+  boost::shared_ptr<ros::Publisher> joint_state_pub_;
 
   virtual void onInit();
 
@@ -109,7 +116,7 @@ void RectifyNodelet::onInit()
   private_nh.param("rectified_frame_id", rectified_frame_id_, std::string(""));
   private_nh.param("parent_frame_id", parent_frame_id_, std::string(""));
 
-  if(rectified_frame_id_ == ""){
+  if(rectified_frame_id_.empty()){
     NODELET_INFO("No rectified frame_id specified, using subscribed image frame_id");
   }else{
     NODELET_INFO("Using frame_id: %s for rectified images", rectified_frame_id_.c_str());
@@ -123,11 +130,27 @@ void RectifyNodelet::onInit()
   private_nh.param("use_tf_listener", use_tfl, false);
 
   if (use_tfb){
-    tfb_.reset(new tf::TransformBroadcaster());
+    this->tfb_.reset(new tf::TransformBroadcaster());
   }
 
   if (use_tfl){
-    tfl_.reset(new tf::TransformListener());
+    this->tfl_.reset(new tf::TransformListener());
+  }
+
+  bool pub_joint_states = false;
+  private_nh.param("pub_joint_states", use_tfl, false);
+
+  if (pub_joint_states){
+    private_nh.param("yaw_joint_name", yaw_joint_name_, std::string(""));
+    private_nh.param("pitch_joint_name", pitch_joint_name_, std::string(""));
+
+    if (!yaw_joint_name_.empty() && !pitch_joint_name_.empty()){
+      this->joint_state_pub_.reset(new ros::Publisher());
+      nh.advertise<sensor_msgs::JointState>("joint_states", 3, false);
+    }else{
+      NODELET_ERROR("No joint names set for yaw and pitch angle, not publishing joint_state");
+    }
+
   }
 
   model_.reset(new ocamlib_image_geometry::OcamlibCameraModelCV1(calibration_text_file));
@@ -231,9 +254,9 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
     // Transform from parent to (non optical) camera frame
     const Eigen::Matrix3d& rotation_eigen = model_->getRotationMatrix();
 
-    Eigen::Quaterniond quat(rotation_eigen);
+
     tf::Quaternion tf_quat;
-    tf::quaternionEigenToTF(quat, tf_quat);
+    tf::quaternionEigenToTF(Eigen::Quaterniond (rotation_eigen), tf_quat);
 
     tf::StampedTransform trans;
     trans.child_frame_id_ = rectified_frame_id_;
@@ -268,6 +291,26 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
     tf_vec.push_back(trans);
 
     tfb_->sendTransform(tf_vec);
+  }
+
+  if (joint_state_pub_){
+    const Eigen::Matrix3d& rot_matrix = model_->getRotationMatrix();
+
+    tf::Matrix3x3 rot_tf;
+    tf::matrixEigenToTF(rot_matrix, rot_tf);
+
+    sensor_msgs::JointState joint_state;
+
+    joint_state.name.push_back(yaw_joint_name_);
+    joint_state.name.push_back(pitch_joint_name_);
+    joint_state.header.stamp = image_msg->header.stamp;
+    joint_state.position.resize(2);
+
+    double tmp_roll;
+    rot_tf.getRPY(tmp_roll, joint_state.position[1], joint_state.position[0] );
+
+    joint_state_pub_->publish(joint_state);
+
   }
 
 }
