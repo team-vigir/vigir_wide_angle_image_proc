@@ -216,15 +216,19 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
                              Eigen::Vector3d::UnitX());
   }else if (tfl_){
     try{
-      tf::StampedTransform transform;
-      tfl_->lookupTransform( this->parent_frame_id_, std::string("/l_hand"), ros::Time(0),  transform);
-      tf::vectorTFToEigen(transform.getOrigin(), virtual_cam_direction);
+      if (!config_.track_frame.empty()){
+        tf::StampedTransform transform;
+        tfl_->lookupTransform( this->parent_frame_id_, std::string(config_.track_frame), ros::Time(0),  transform);
+
+        tf::Vector3 target_dir = transform * tf::Vector3(config_.track_frame_x,
+                                                         config_.track_frame_y,
+                                                         config_.track_frame_z);
+
+        tf::vectorTFToEigen(target_dir, virtual_cam_direction);
+      }
     }catch(tf::TransformException e){
-      NODELET_ERROR("Transfom error");
+      NODELET_ERROR("Transfom error: %s", e.what());
     }
-
-
-
   }
 
 
