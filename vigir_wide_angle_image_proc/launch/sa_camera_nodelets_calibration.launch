@@ -18,15 +18,19 @@ Meant for calibration, the cameras follow the robot endeffectors per default.
     <param name="track_frame" value="l_hand" />
     <param name="track_frame_y" value="0.2" />
     <param name="focal_length" value="2.0" />
-    
-
+     
     <param name="use_tf_broadcaster" value="false" />
     <param name="use_tf_listener" value="true" />
+    
+    <param name="pub_joint_states" value="true" />
+    <param name="yaw_joint_name" value="l_situational_awareness_camera_yaw_joint" />
+    <param name="pitch_joint_name" value="l_situational_awareness_camera_pitch_joint" />
+
     <param name="parent_frame_id" value="/l_situational_awareness_camera_link_upright" />
 
   </node>
 
-  <node pkg="tf" type="static_transform_publisher" name="rotate_left_sa_optical_frame" args="0 0 0 0 0 1.5707963 /l_situational_awareness_camera_link /l_situational_awareness_camera_link_upright 100"/>
+  <!--<node pkg="tf" type="static_transform_publisher" name="rotate_left_sa_optical_frame" args="0 0 0 0 0 1.5707963 /l_situational_awareness_camera_link /l_situational_awareness_camera_link_upright 100"/>-->
 
 
   <node pkg="nodelet" type="nodelet" name="right_sa_rectify"
@@ -43,11 +47,16 @@ Meant for calibration, the cameras follow the robot endeffectors per default.
 
     <param name="use_tf_broadcaster" value="false" />
     <param name="use_tf_listener" value="true" />
+        
+    <param name="pub_joint_states" value="true" />
+    <param name="yaw_joint_name" value="r_situational_awareness_camera_yaw_joint" />
+    <param name="pitch_joint_name" value="r_situational_awareness_camera_pitch_joint" />
+
     <param name="parent_frame_id" value="/r_situational_awareness_camera_link_upright" />
 
   </node>
 
-  <node pkg="tf" type="static_transform_publisher" name="rotate_right_sa_optical_frame" args="0 0 0 0 0 -1.5707963 /r_situational_awareness_camera_link /r_situational_awareness_camera_link_upright 100"/>
+  <!--<node pkg="tf" type="static_transform_publisher" name="rotate_right_sa_optical_frame" args="0 0 0 0 0 -1.5707963 /r_situational_awareness_camera_link /r_situational_awareness_camera_link_upright 100"/>-->
 
 </launch>
 

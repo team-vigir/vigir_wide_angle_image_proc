@@ -138,7 +138,7 @@ void RectifyNodelet::onInit()
   }
 
   bool pub_joint_states = false;
-  private_nh.param("pub_joint_states", use_tfl, false);
+  private_nh.param("pub_joint_states", pub_joint_states, false);
 
   if (pub_joint_states){
     private_nh.param("yaw_joint_name", yaw_joint_name_, std::string(""));
@@ -147,6 +147,7 @@ void RectifyNodelet::onInit()
     if (!yaw_joint_name_.empty() && !pitch_joint_name_.empty()){
       this->joint_state_pub_.reset(new ros::Publisher());
       nh.advertise<sensor_msgs::JointState>("joint_states", 3, false);
+      NODELET_INFO("Rectification publishing joint states for joints %s and %s", yaw_joint_name_.c_str(), pitch_joint_name_.c_str());
     }else{
       NODELET_ERROR("No joint names set for yaw and pitch angle, not publishing joint_state");
     }
