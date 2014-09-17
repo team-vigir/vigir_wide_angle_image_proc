@@ -25,6 +25,7 @@ Meant for calibration, the cameras follow the robot endeffectors per default.
     <param name="pub_joint_states" value="true" />
     <param name="yaw_joint_name" value="l_situational_awareness_camera_yaw_joint" />
     <param name="pitch_joint_name" value="l_situational_awareness_camera_pitch_joint" />
+    <remap from="joint_states" to="l_sa_joint_states" />
 
     <param name="parent_frame_id" value="/l_situational_awareness_camera_link_upright" />
 
@@ -51,7 +52,8 @@ Meant for calibration, the cameras follow the robot endeffectors per default.
     <param name="pub_joint_states" value="true" />
     <param name="yaw_joint_name" value="r_situational_awareness_camera_yaw_joint" />
     <param name="pitch_joint_name" value="r_situational_awareness_camera_pitch_joint" />
-
+    <remap from="joint_states" to="r_sa_joint_states" />
+    
     <param name="parent_frame_id" value="/r_situational_awareness_camera_link_upright" />
 
   </node>
