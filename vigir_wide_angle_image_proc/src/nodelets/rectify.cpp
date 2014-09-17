@@ -307,14 +307,15 @@ void RectifyNodelet::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
 
     joint_state.name.push_back(yaw_joint_name_);
     joint_state.name.push_back(pitch_joint_name_);
-    joint_state.header.stamp = image_msg->header.stamp;
     joint_state.position.resize(2);
 
     double tmp_roll;
     rot_tf.getRPY(tmp_roll, joint_state.position[1], joint_state.position[0] );
 
+    joint_state.header.stamp = image_msg->header.stamp - ros::Duration(0.001);
     joint_state_pub_->publish(joint_state);
-
+    joint_state.header.stamp = image_msg->header.stamp + ros::Duration(0.001);
+    joint_state_pub_->publish(joint_state);
   }
 
 }
