@@ -56,18 +56,19 @@ void OcamlibCameraModelCV1::updateUndistortionLUT(int height,
 }
 
 
-void OcamlibCameraModelCV1::world2cam(const Eigen::Vector3d& world, Eigen::Vector2d& cam){
+void OcamlibCameraModelCV1::world2cam_w(const Eigen::Vector3d& world, Eigen::Vector2d& cam){
       //std::cout << to_cam_ << "\n";
       //std::cout << transform_matrix_ << "\n";
       //std::cout << (to_cam_.transpose() * rotation_eigen_  * to_cam_) << "\n\n";
-      Eigen::Vector3d world_vec_rotated (to_cam_ * world);
-      Eigen::Vector3d world_vec_permute (world_vec_rotated.y(), world_vec_rotated.x(), -world_vec_rotated.z());
-      this->world2cam(cam.data(), world_vec_permute.data());
+      Eigen::Vector3d world_vec_rotated (transform_matrix_ * world);
+      //Eigen::Vector3d world_vec_permute (world_vec_rotated.y(), world_vec_rotated.x(), -world_vec_rotated.z());
+      Eigen::Vector3d world_vec_permute (world_vec_rotated);
+      this->world2cam(cam, world_vec_permute);
 
 }
 
-void OcamlibCameraModelCV1::cam2world(const Eigen::Vector2d& cam, Eigen::Vector3d& world){
-  this->cam2world(world.data(), cam.data());
+void OcamlibCameraModelCV1::cam2world_w(const Eigen::Vector2d& cam, Eigen::Vector3d& world){
+  this->cam2world_w(cam, world);
 
 }
 
@@ -81,7 +82,7 @@ void OcamlibCameraModelCV1::rectifyImage(const cv::Mat& raw, cv::Mat& rectified,
 }
 
 
-void OcamlibCameraModelCV1::cam2world(double point3D[3], double point2D[2], struct ocam_model *myocam_model)
+void OcamlibCameraModelCV1::cam2world(Eigen::Vector3d& point3D, const Eigen::Vector2d& point2D, struct ocam_model *myocam_model)
 {
  double *pol    = myocam_model->pol;
  double xc      = (myocam_model->xc);
@@ -115,7 +116,7 @@ void OcamlibCameraModelCV1::cam2world(double point3D[3], double point2D[2], stru
 }
 
 //------------------------------------------------------------------------------
-void OcamlibCameraModelCV1::world2cam(double point2D[2], double point3D[3], struct ocam_model *myocam_model)
+void OcamlibCameraModelCV1::world2cam(Eigen::Vector2d& point2D, const Eigen::Vector3d& point3D, struct ocam_model *myocam_model)
 {
  double *invpol     = myocam_model->invpol;
  double xc          = (myocam_model->xc);
@@ -164,12 +165,12 @@ void OcamlibCameraModelCV1::world2cam(double point2D[2], double point3D[3], stru
   }
 }
 
-void OcamlibCameraModelCV1::cam2world(double* point3D, double* point2D)
+void OcamlibCameraModelCV1::cam2world(Eigen::Vector3d& point3D, const Eigen::Vector2d& point2D)
 {
   cam2world(point3D, point2D, &o);
 }
 
-void OcamlibCameraModelCV1::world2cam(double* point2D, double* point3D)
+void OcamlibCameraModelCV1::world2cam(Eigen::Vector2d& point2D, const Eigen::Vector3d& point3D)
 {
   std::cout << "bla\n";
   world2cam(point2D, point3D, &o);
@@ -213,7 +214,7 @@ void OcamlibCameraModelCV1::updateUndistortionLUT(cv::Mat *mapx,
   double Nyc = width/2.0;
   double Nz  = -width/sf;
 
-  double m[2];
+  Eigen::Vector2d m;
 
   for (int i=0; i<height; i++){
     for (int j=0; j<width; j++)
@@ -221,7 +222,7 @@ void OcamlibCameraModelCV1::updateUndistortionLUT(cv::Mat *mapx,
       Eigen::Vector3d world_vec_rotated (transform_matrix * Eigen::Vector3d(i - Nxc,
                                                                             j - Nyc,
                                                                             Nz));
-      this->world2cam(m, world_vec_rotated.data(), &o);
+      this->world2cam(m, world_vec_rotated, &o);
 
       mapx->at<float>(i,j) = (float) m[1];
       mapy->at<float>(i,j) = (float) m[0];

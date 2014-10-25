@@ -20,11 +20,11 @@ int main(int argc, char **argv)
   //double m[2];
 
   for (size_t i = 0; i < 10; ++i){
-    model.world2cam(point_world, point_cam);
+    model.world2cam_w(point_world, point_cam);
     std::cout << "\npoint_cam:\n" << point_cam << "\n-------------------------\n";
 
-    //model.cam2world(point_world.data(),  point_cam.data());
-    //std::cout << "\npoint_world:\n" << point_world << "\n-------------------------\n";
+    model.cam2world_w(point_cam, point_world);
+    std::cout << "\npoint_world:\n" << point_world << "\n-------------------------\n";
 
   }
 

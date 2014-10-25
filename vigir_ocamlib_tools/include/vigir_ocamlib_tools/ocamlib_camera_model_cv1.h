@@ -91,8 +91,8 @@ public:
 
   void setCameraInfo(sensor_msgs::CameraInfo& cam_info) const { cam_info = *this->cam_info_; };
 
-  void world2cam(const Eigen::Vector3d& world, Eigen::Vector2d& cam);
-  void cam2world(const Eigen::Vector2d& cam, Eigen::Vector3d& world);
+  void world2cam_w(const Eigen::Vector3d& world, Eigen::Vector2d& cam);
+  void cam2world_w(const Eigen::Vector2d& cam, Eigen::Vector3d& world);
 
 
 
@@ -102,11 +102,11 @@ private:
   void create_perspective_undistortion_LUT( cv::Mat *mapx, cv::Mat *mapy, float sf) const;
 
 
-  void cam2world(double point3D[3], double point2D[2], struct ocam_model *myocam_model );
-  void world2cam(double point2D[2], double point3D[3], struct ocam_model *myocam_model );
+  void cam2world(Eigen::Vector3d& point3D, const Eigen::Vector2d& point2D, struct ocam_model *myocam_model );
+  void world2cam(Eigen::Vector2d& point2D, const Eigen::Vector3d& point3D, struct ocam_model *myocam_model );
 
-  void cam2world(double *point3D, double *point2D);
-  void world2cam(double *point2D, double *point3D);
+  void cam2world(Eigen::Vector3d& point3D, const Eigen::Vector2d& point2D);
+  void world2cam(Eigen::Vector2d& point2D, const Eigen::Vector3d& point3D);
 
 
 
