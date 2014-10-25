@@ -32,9 +32,13 @@ void OcamlibCameraModelCV1::updateUndistortionLUT(int height,
     mapx_persp_ = cv::Mat(height, width, CV_32FC1);
     mapy_persp_ = cv::Mat(height, width, CV_32FC1);
 
+    rotation_eigen_ = (ocamlib_image_geometry::getRotationFromDirection(direction, up));
+    transform_matrix_ = (to_cam_.transpose() * rotation_eigen_  * to_cam_);
+
+
 
     //create_perspective_undistortion_LUT( &mapx_persp_, &mapy_persp_, &o, fc );
-    this->updateUndistortionLUT(&mapx_persp_, &mapy_persp_, fc, direction, up);
+    this->updateUndistortionLUT(&mapx_persp_, &mapy_persp_, fc, transform_matrix_);
     rectify_settings_.updateSettings(height, width, fc, direction, up);
 
     // @TODO: Find out if optical center estimate or ideal optical center should be used here
@@ -49,6 +53,22 @@ void OcamlibCameraModelCV1::updateUndistortionLUT(int height,
     cam_info_->P[6]  = o.yc;
     cam_info_->P[10] = 1.0;
   }
+}
+
+
+void OcamlibCameraModelCV1::world2cam(const Eigen::Vector3d& world, Eigen::Vector2d& cam){
+      //std::cout << to_cam_ << "\n";
+      //std::cout << transform_matrix_ << "\n";
+      //std::cout << (to_cam_.transpose() * rotation_eigen_  * to_cam_) << "\n\n";
+      Eigen::Vector3d world_vec_rotated (to_cam_ * world);
+      Eigen::Vector3d world_vec_permute (world_vec_rotated.y(), world_vec_rotated.x(), -world_vec_rotated.z());
+      this->world2cam(cam.data(), world_vec_permute.data());
+
+}
+
+void OcamlibCameraModelCV1::cam2world(const Eigen::Vector2d& cam, Eigen::Vector3d& world){
+  this->cam2world(world.data(), cam.data());
+
 }
 
 
@@ -144,7 +164,7 @@ void OcamlibCameraModelCV1::world2cam(double point2D[2], double point3D[3], stru
   }
 }
 
-void OcamlibCameraModelCV1::cam2world(double point3D[3], double point2D[2])
+void OcamlibCameraModelCV1::cam2world(double* point3D, double* point2D)
 {
   cam2world(point3D, point2D, &o);
 }
@@ -155,6 +175,7 @@ void OcamlibCameraModelCV1::world2cam(double* point2D, double* point3D)
   world2cam(point2D, point3D, &o);
 }
 
+/*
 void OcamlibCameraModelCV1::create_perspective_undistortion_LUT( cv::Mat *mapx, cv::Mat *mapy, struct ocam_model *ocam_model, float sf)
 {
      int i, j;
@@ -178,25 +199,21 @@ void OcamlibCameraModelCV1::create_perspective_undistortion_LUT( cv::Mat *mapx, 
              mapy->at<float>(i,j) = (float) m[0];
          }
 }
+*/
 
 void OcamlibCameraModelCV1::updateUndistortionLUT(cv::Mat *mapx,
                                                   cv::Mat *mapy,
                                                   float sf,
-                                                  const Eigen::Vector3d& direction,
-                                                  const Eigen::Vector3d& up)
+                                                  const Eigen::Matrix3d& transform_matrix)
 {
   int width = mapx->cols; //New width
   int height = mapx->rows;//New height
-
-  rotation_eigen_ = (ocamlib_image_geometry::getRotationFromDirection(direction, up));
 
   double Nxc = height/2.0;
   double Nyc = width/2.0;
   double Nz  = -width/sf;
 
   double m[2];
-
-  Eigen::Matrix3d transform_matrix (to_cam_.transpose() * rotation_eigen_  * to_cam_);
 
   for (int i=0; i<height; i++){
     for (int j=0; j<width; j++)

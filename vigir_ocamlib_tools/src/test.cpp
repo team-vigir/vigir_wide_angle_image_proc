@@ -2,8 +2,45 @@
 #include <vigir_ocamlib_tools/ocamlib_camera_model_cv1.h>
 #include <vigir_ocamlib_tools/math_tools.h>
 
+#include <image_geometry/pinhole_camera_model.h>
+
 int main(int argc, char **argv)
 {
+
+
+  ocamlib_image_geometry::OcamlibCameraModelCV1 model("/home/kohlbrecher/flor_repo_test2/catkin_ws/src/vigir_wide_angle_image_proc/vigir_wide_angle_image_proc/calib/calib_results_l_sa.txt");
+  model.updateUndistortionLUT(900, 900, 4.0);
+
+  Eigen::Vector3d point_world(10.0, 0.0, 0.0);
+  Eigen::Vector2d point_cam;
+
+  std::cout << "\npoint_world:\n" << point_world << "\n-------------------------\n";
+
+  //double M[3];
+  //double m[2];
+
+  for (size_t i = 0; i < 10; ++i){
+    model.world2cam(point_world, point_cam);
+    std::cout << "\npoint_cam:\n" << point_cam << "\n-------------------------\n";
+
+    //model.cam2world(point_world.data(),  point_cam.data());
+    //std::cout << "\npoint_world:\n" << point_world << "\n-------------------------\n";
+
+  }
+
+
+
+
+  sensor_msgs::CameraInfoPtr rect_info (new sensor_msgs::CameraInfo());
+  model.setCameraInfo(*rect_info);
+
+  image_geometry::PinholeCameraModel cm;
+
+  cm.fromCameraInfo(*rect_info);
+
+  cv::Point3d point_world_cv(point_world.x(), point_world.y(), point_world.z());
+  cv::Point2d point_cam_cv = cm.project3dToPixel(point_world_cv);
+
   /*
   //ros::init(argc, argv, "test_wide_angle");
 

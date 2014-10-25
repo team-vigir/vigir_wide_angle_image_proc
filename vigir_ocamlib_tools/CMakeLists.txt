@@ -11,11 +11,11 @@ include_directories(
 )
 
 
-FIND_PACKAGE(catkin REQUIRED COMPONENTS roscpp cmake_modules cv_bridge)
+FIND_PACKAGE(catkin REQUIRED COMPONENTS roscpp cmake_modules cv_bridge image_geometry)
 LIST(APPEND INCLUDE_DIRECTORIES ${catkin_INCLUDE_DIRS})
 catkin_package(
   DEPENDS Eigen
-  CATKIN_DEPENDS roscpp cv_bridge
+  CATKIN_DEPENDS roscpp cv_bridge image_geometry
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
 )
