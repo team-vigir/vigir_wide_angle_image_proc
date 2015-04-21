@@ -44,7 +44,12 @@ install(FILES nodelet_plugins.xml
 
 # install the launch file
 install(DIRECTORY launch
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
+# install the calibration file
+install(DIRECTORY calib
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
 #install the launch files.
@@ -52,4 +57,3 @@ install(DIRECTORY launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
   FILES_MATCHING PATTERN "*.launch"  
 )
-
